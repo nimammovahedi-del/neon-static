@@ -1,0 +1,265 @@
+[
+ {
+  "lens": "Technical feasibility in Godot 4.7 Forward+ on a MacBook Pro M4: performance, scoring, driving and filming, stealth, traffic, pursuit, streaming, saves, and how files are split between chats",
+  "overall": "Most of the design can be built with standard Godot parts. The scoring maths, the suspicion model, the lane-map traffic and the incident frame are all cheap. The two weakest areas are the performance budget and file ownership. The current Acid Cyber setup turns on almost every expensive Forward+ effect at once and runs at about 12 fps. Several shared files have no owner or more than one owner: project.godot, cfg.gd, events.gd, the collision layers, the root game scene and the camera rig. That will stall the \"touch only your files\" process early. AI driving (police, getaway car, rival van, pursuit) has no owner at all, and chunked streaming adds risk with no benefit for a 350 by 300 m district. The plan already has 9 build chats plus the orchestrator, close to the 10 asked for. The fixes below reassign work and add no new chats.",
+  "issues": [
+   {
+    "severity": "blocker",
+    "where": "DESIGN.md section 18 and PLAN.md stage A (G1), risk 1",
+    "problem": "The look in godot/scripts/atmos.gd and project.godot turns on all of these together: SDFGI (6 cascades, 0.3 m cells), SSIL and SSAO at quality 3, SSR with 128 steps, volumetric fog with a 160x160x160 volume, an 8192 shadow atlas, MSAA 2x and about 80,000 rain and splash particles (26k x 1.8 + 14k x 1.8 + splashes). It currently runs at about 12 fps. The budget only caps lights and draw calls, so G1 could cut lights and still miss 60. SDFGI also re-scrolls its cascades when the camera moves fast, so at car speed it hitches and leaks light. The three test views are standing shots and do not cover the worst case: driving with the camcorder raised, traffic and an incident running.",
+    "fix": "Have G1 work to a GPU-milliseconds budget per feature (16.6 ms total at 1080p): SDFGI and SSIL off, SSR at 32 to 48 steps or replaced by the wet-road shader, fog at about 64 cubed, about 30k rain particles. Make one test view a scripted pursuit drive with the viewfinder up, 14 traffic cars and 12 people."
+   },
+   {
+    "severity": "blocker",
+    "where": "PLAN.md section 2 (ownership table) and DESIGN.md section 19",
+    "problem": "Several files that every lane needs have no owner or more than one. project.godot holds the input map and autoloads (Foundation) as well as render settings and shader globals (Graphics), and other lanes will need to add autoloads and collision layer names. cfg.gd is meant to hold every tuning number from all lanes. events.gd is in core/, so a lane that needs a new signal must edit Foundation's file. No lane owns the root game scene that brings together the district, player, traffic, incidents and UI, or the old look-test scripts/ and scenes/ folders. Under the rule 'edit nothing else', each of these becomes a stop-and-ask round trip.",
+    "fix": "Give the orchestrator project.godot, events.gd and a collision-layer table in CONTRACTS.md, all fixed before stage B. Split tuning into one file per system (cfg/camcorder.gd and so on) loaded by a small cfg autoload. Give Foundation a game/ folder for the root scene and wiring, and retire or move the look-test scripts in G1."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md lanes 4, 5, 7; DESIGN.md sections 8 and 15",
+    "problem": "Nobody owns AI driving. Lane 5 covers traffic and the rival van, lane 4 the player's car and lane 7 'pursuit' and 'police arrival'. The fleeing car, the police cars and the getaway driver all need a driver that can run red lights, leave lanes and crash. If traffic cars are kinematic path-followers and the player car is a physics body, the player hits immovable cars. The sideswipe, crash and forced-stop moments also need the fleeing car to react physically.",
+    "fix": "Put one car body in vehicles/ (lane 4) that is driven through an input interface (steer, throttle, brake). The player, traffic, police, the getaway car and the van all feed that same interface. Lane 5 owns a lane-following AI driver with a 'pursuit' and an 'ignore lights' mode, and lane 7 only gives it routes and goals. Write this into CONTRACTS.md."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 18 ('District loaded in block-sized chunks') and section 8",
+    "problem": "The drivable area is only about 350 by 300 m. Pursuits circle the whole loop, and police, traffic and the rival van travel across blocks off-screen. Streaming chunks in and out adds threaded-loading hitches and colliders that vanish under AI cars. Incident sites and light zones could also unload while an incident is still running, all to save memory a 5-block district does not need.",
+    "fix": "Load the whole district once behind the loading screen and get the frame savings from visibility_range (distance-based simpler versions of models) and baked OccluderInstance3D occlusion culling, which work in Forward+ on Mac. Drop chunk streaming from the first draft."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md lane 1 (F2 test bot in stage A) and section 1 'Done means'; DESIGN.md section 13",
+    "problem": "A bot that plays 20 nights at 'average skill' would have to drive, find vantage points, film robberies and follow pursuits. It cannot be built in stage A, before any of those systems exist. Real-time nights would take 4 hours, and speeding up Engine.time_scale breaks car physics and the 10 Hz checks. Balance (B1) and the done check depend on it, so the plan would stall at the end.",
+    "fix": "Split it in two. An economy bot runs headless, takes clip outcomes from skill-based distributions, feeds them through the real scoring, desk and career code, and finishes 20 nights in seconds. A smoke bot follows scripted routes through one robbery and one pursuit to catch errors. Build the economy bot in stage E and the smoke bot in stage D."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md sections 4, 5 and 18 (shot checks)",
+    "problem": "Three gaps. (1) Section 4 shows live bracket hints whenever the camcorder is raised, but section 18 runs checks only while recording. (2) The main robbery vantage is through shop glass, and plain occlusion rays stop at glass that has collision, so the best shot would read as blocked. (3) A key moment such as a shot fired lasts less than 0.1 s, so a 10 Hz sample can miss it.",
+    "fix": "Run the checks at 10 Hz whenever the camcorder is raised and write the timeline only while recording. Cast the visibility rays on a dedicated 'blocks camera' collision layer that leaves out glass and rain, and apply a small clarity penalty for glass. When a key moment fires, run one extra clarity sample on the spot rather than waiting for the next tick."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 12 (strip of 6 to 10 stills) and PLAN.md lane 3 (clip thumbnails)",
+    "problem": "Grabbing stills with get_viewport().get_texture().get_image() makes the CPU wait for the GPU, a stall of several ms at 1080p. Stills are wanted at key moments, so the stalls land on the gunshot or the crash. The viewfinder overlay would also be baked into the still unless it is captured before the overlay is drawn. Who stores the images and how long they are kept is not stated.",
+    "fix": "Capture at most 10 stills per clip as asynchronous readbacks of a 320x180 copy, spaced at least 0.5 s apart and queued by the recorder. Keep them in memory with the clip, apply the camcorder look as a shader at the news desk, and never write them to the save."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md lanes 3 and 4 (C1 viewfinder vs M3 filming from the car); DESIGN.md section 4",
+    "problem": "Lane 3 (camcorder) and lane 4 (Movement, which builds M3 'filming from the car' and the driver's-seat view) would both build the camera setup. At 16x zoom inside a moving physics car, the picture judders unless physics interpolation is on, and the M4's 120 Hz display (vsync is off in project.godot) makes this worse. If the 'windscreen narrows to the viewfinder' effect is built as a second camera in a SubViewport, the scene is drawn twice.",
+    "fix": "Give lane 3 the only camera rig: one Camera3D whose aim, zoom (FOV) and shake it controls, mounted to a socket that lane 4 provides on the player or the car seat. Turn on physics interpolation in F1, and make the viewfinder a single full-screen overlay shader, never a second render."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md sections 5 ('Lit') and 9 (light zones); PLAN.md G2, G6, G8 vs S1, S2",
+    "problem": "Light zones are hand-placed static volumes owned by Graphics in city/, but stealth and scoring both read them. Many lights move or change: headlights, police light bars, flickering signs, provoking with flashed headlights, and moving evidence 'into the light'. Static zones cannot cover these. S1 is built in stage D, but the zones are only tuned in stage E (G8), so stealth gets tuned against zones that will change later.",
+    "fix": "Have lane 6 define a LightZone component (shape, strength, on/off) in stealth/, which Graphics places in the district and which can also be attached to car headlights and police cars. Scoring reads light from the same lookup. Bring the stealth tuning of light zones forward into G6."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 8 (staying filmable, route length)",
+    "problem": "The chase speeds up whenever you are within 25 m, but the best filming distance is 15 to 40 m. The rubber-banding therefore pushes the player out of the best shot and blocks forced stops. Also, a 2 to 3 km route on a district about 350 by 300 m means two laps of the same ring, so the second lap repeats corners the player has already seen.",
+    "fix": "Speed the chase up only below about 10 m and slow it down beyond about 80 m, so 15 to 40 m is the stable band. Choose the ending (forced stop, crash or escape) at the start and place it at a chosen route node so it happens on camera. Allow 1.2 to 1.8 km routes with one cut through the underpass instead of a repeated lap."
+   },
+   {
+    "severity": "minor",
+    "where": "DESIGN.md section 18 (24 lights, 4 shadowed) vs sections 8, 15 and 11 (provoke with headlights); also G6 interiors",
+    "problem": "Fourteen traffic cars with real headlights is 28 spotlights, and police light bars add more, so the 24-light cap fails as soon as traffic arrives. Separately, the rain particles are world-space boxes (local_coords false) and will fall inside shop interiors and through the car roof.",
+    "fix": "Make headlights and light bars emissive meshes with fake light cones, and give real lights only to the player's car and the nearest police car. Mask rain with a GPUParticlesCollisionHeightField3D or a roof height map that follows the camera, and turn rain off inside interior zones."
+   },
+   {
+    "severity": "minor",
+    "where": "DESIGN.md section 19 (saves) and PLAN.md F1 in stage A",
+    "problem": "The save holds data owned by six lanes: money, gear, heat, ledger, reputation, rent and debt. F1 builds save and load before any of those exist. With no per-system format agreed, later lanes will either edit core/ or each invent their own file.",
+    "fix": "State in CONTRACTS.md that each system registers a save section as a plain dictionary (save_data()/load_data(dict)) with its own version number, and that F1 saves to JSON (no saved custom Resources). Have the smoke bot load a save from the previous week as a check."
+   }
+  ],
+  "sound_parts": [
+   "Scoring as a plain calculation over a recorded timeline (DESIGN section 5) is cheap and can be tested with made-up tapes. Checking about 10 subjects with 3 to 5 sample points each at 10 Hz costs well under 1 ms.",
+   "The suspicion model (cone, range, a few line-of-sight rays, rise and fall rates, an alert tell at 40) follows the standard proven pattern and runs fine at 5 to 10 Hz per watcher.",
+   "Traffic on a hand-made lane map with stop lights, instead of NavigationServer avoidance, is the right choice for cars, in line with the research.",
+   "The cap of 4 shadowed lights, with the rest of the glow coming from emissive surfaces, suits Forward+ clustered lighting, apart from the headlight problem above.",
+   "Making stage A reach 60 fps before anything else is built on top is the right gate.",
+   "Shared incident frame (stages, actors, police timeline, endings, hooks for crossing the line): one data shape for robbery and pursuit keeps lane 7's work bounded.",
+   "The chat count is already near the target of about 10: 9 build lanes plus the orchestrator, with throwaway Sonnet testers. The fixes above reassign work and add no chats.",
+   "The two-Godot limit through gslot.sh and only the orchestrator committing avoid editor and git collisions."
+  ]
+ },
+ {
+  "lens": "game design",
+  "overall": "The core fantasy, the four pillars and the clip-value formula are strong. A quick calculation puts a starter robbery clip near the $300-$500 target (roughly $270 clean, about $400 with exclusivity), so the per-clip money roughly works. The problems are in timing and incentives. The robbery and police clocks don't line up with when a call arrives. The suspicion rates make the promised dark vantage points useless. Two of the four line-crossing acts carry no real cost, and the clean path is strictly worse. One selling station is never worth choosing. The clip and rent rules invite exploits or a slow money spiral. None of this needs a redesign. Most fixes are a sentence in DESIGN.md plus new numbers in cfg.gd. They should be settled before briefs I2, I3, S1, S2, N1 and N2 are written, because the bot balance pass (B1) cannot fix rules that contradict each other.",
+  "issues": [
+   {
+    "severity": "blocker",
+    "where": "DESIGN.md sections 6 and 7 (robbery stages vs scanner call vs police arrival)",
+    "problem": "Nothing says when in the robbery's timeline the call reaches the scanner. A 911 'robbery in progress' call would be made during or after the hold-up. Casing, hold-up, trouble and getaway together run only 60 to 125 s, and police arrive 90 to 150 s after the call. A player who drives over, parks, walks to a vantage point and raises the camcorder will usually arrive at the getaway or at an empty store. This leaves the two biggest key moments (gun drawn, cash grabbed) almost impossible to capture.",
+    "fix": "State that an incident's clock is anchored to the call. For example, the call fires at the start of casing, and the hold-up does not begin until the player is within about 150 m or 45 s have passed. Write a worked timeline (call at t=0, player arrives at t=X, police at t=Y) into section 7 as a test case for the bot."
+   },
+   {
+    "severity": "blocker",
+    "where": "DESIGN.md section 9 (suspicion rise rates)",
+    "problem": "Suspicion only falls when you are out of sight, and every hidden state still rises. The lookout watches the street for the whole incident. Crouched in shadow at 15 m with REC on (4 \u00d7 1.25 = 5 per second), you are spotted in about 20 s; standing in shadow takes about 7 s; standing in light takes 2 s. The 'dark vantage across the street' built at every robbery site therefore can't be held for a 30 to 50 s hold-up. Being spotted becomes a matter of time running out, not a readable mistake.",
+    "fix": "Give each state a ceiling as well as a rate. For example, crouched in shadow levels off at 30 and standing in shadow at 50, below the stare threshold at 40, so suspicion only climbs further when you move, run, step into light or come closer than about 10 m. Let it fall slowly while you are in view but holding a concealed pose."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 11 (Withhold and Provoke) and section 1 pillar 3",
+    "problem": "Withhold contradicts itself: you hear every incident on the police scanner, so someone has already called 911. It also has no cost of any kind ('Stations never know'). Provoke is only risky on foot: honk from the car and drive off. With only ledger captions as the cost, the clean choices are strictly worse, so a player optimising money always provokes and withholds. The temptation is gone because there is no choice to make.",
+    "fix": "Make Withhold apply only to incidents you find yourself (tip-line calls, scenes you drive past) or to injured people at a scene ('call for an ambulance'). Give both acts one concrete, occasional cost, such as a witness or the rival van filming you (this would also settle open question 1), which turns into heat and a MERIDIAN story about you, while the payout stays as it is."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 11 (Rearrange) and section 12 (MERIDIAN on tampering)",
+    "problem": "A tape is flagged as tampered only if it shows your own hands. Stopping recording, moving the gun and recording again therefore always avoids the flag, so MERIDIAN's penalty never applies. Rearranging is also not capped, so moving three objects earns +$360.",
+    "fix": "Let the recorder remember where each movable object first appeared on any tape of the incident, or where police logged it, and flag the tape if it moves between shots. Cap the 'money shot' bonus at one per incident."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md sections 5 and 12 (what a 'clip' is)",
+    "problem": "A clip is never defined. If each stretch of recording is its own clip, a player can stop and start to split one robbery into several clips. Each split resets the 8-second diminishing returns on coverage, keeps the \u00d71.5 exclusivity, and can go to whichever station pays most for that part (gun shot to Channel 6, steady wide shot to HALO). That is a farming exploit.",
+    "fix": "Define a clip as all footage from one incident, merged into one timeline, so diminishing returns apply across the whole incident. Each incident is sold once, to one station."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 12 (station payouts)",
+    "problem": "MERIDIAN pays 70% of Channel 6 and adds \u00d71.2 on coverage, so it reaches at most 0.84 of Channel 6 on coverage and less on key moments. It never wins an offer. Because reputation adds up to +30%, players will feed one station (Channel 6, or HALO for early clips) for the whole career, and the three-buyer choice disappears.",
+    "fix": "Make each station win on a clear type of clip. For example, MERIDIAN pays about 110% for clean, steady, untampered clips with a face and police at work, and each station's offer drops 15% for every clip already sold to it that night, so spreading sales pays."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md sections 2, 6, 7 and 14 (calls per night vs incident sites)",
+    "problem": "There are three robbery sites and none can repeat in a night, so there are at most three robberies. Pursuits only start from robberies. Nothing can fill 5 to 7 calls. The same three stores every night also make each night play out the same way.",
+    "fix": "Add standalone pursuit calls ('vehicle failing to stop on Kessler') and one or two cheap filler calls that reuse existing parts (shots heard, police stop, minor crash with no stages). Change the call rule to 'at least 5 calls, at most 3 robberies'. Vary which store, vantage point and actor positions are used each night."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md sections 7 and 8 (getaway into pursuit)",
+    "problem": "The getaway lasts 10 to 20 s. A player on foot across the street must lower the camcorder, run to the car, press F and set off, so they start 150 m or more behind. That is beyond the 120 m catch-up rule, which only slows the chase 'slightly'. Police are rarely 'close', because they arrive 90 to 150 s after the call. So the 'best money in the draft' chain will seldom happen or be catchable.",
+    "fix": "Make the chain fire when the getaway car meets the first arriving patrol car. Add a scripted 6 to 10 s start for the getaway car (a stalled start, a red light or a blocked junction) that waits until the player is in a car or 20 s have passed."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md sections 4, 5 and 8 (filming a pursuit with starter gear)",
+    "problem": "Pursuits average 20 to 33 m/s (2 to 3 km in 90 to 150 s, which means about two laps of a ring roughly 1.3 km round) through traffic and four hard corners. Starter gear has 'heavy shake when moving', 0.8 s autofocus and noisy low light, so clarity will rarely pass the 0.4 needed to capture a key moment. Steering with W A S D while aiming a narrowed viewfinder at that speed will feel like failing, not like juggling.",
+    "fix": "Have the starter autofocus lock on to tagged cars, and use a milder shake for road movement than for walking. Tune so that a starter player holding the car centred at 15 to 40 m scores about 0.5 clarity. Shorten pursuits to 60 to 90 s at about 18 m/s average, mostly one lap with an underpass shortcut."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 10 (rent and debt) and section 13 (target curve)",
+    "problem": "Rent goes up 8% a week with no end, and debt grows 20% a week, but income stops growing once gear is maxed (one district, fixed clip values). By week 20 rent is about $3,900, and by week 52 about $49,000. An endless career with no game over therefore ends in debt that can never be repaid, which breaks the 'slow financial pressure' promise.",
+    "fix": "Hold rent at a ceiling (for example $1,800) after week 8, or tie rent steps to optional moves to bigger premises. Cap debt interest, for example at 10% a week with debt never above 4 weeks' rent, and cover both caps in the 20-night bot test."
+   },
+   {
+    "severity": "major",
+    "where": "DESIGN.md section 9 (being seen while in the car)",
+    "problem": "Nothing says how watchers see a player sitting in a parked car (headlights, engine noise, whether the car body counts as cover). With the dash mount, or by aiming the camcorder through the windscreen, 'never leave the car' could be fully safe or always spotted, depending on how the builder guesses. Section 7's '4 seconds to break line of sight' also has no meaning when you can simply drive away.",
+    "fix": "Add a row to the suspicion table, for example: 'in a parked car, lights off: as standing in shadow; engine running or headlights on: as standing in light; moving car in view: as running'. Add a cost to fleeing by car, such as the robber firing at the car and causing damage that has to be repaired."
+   },
+   {
+    "severity": "minor",
+    "where": "DESIGN.md sections 2, 6, 9, 12 and 16 (clock, readability, first-time player)",
+    "problem": "Seven game hours in 12 minutes means one real second is about 35 game seconds. Police due '90 s' after a call would show on the clock as nearly an hour later, which reads as nonsense. Several smaller gaps also confuse a new player. The suspicion eye shows only in the viewfinder, so on foot with the camcorder lowered there is no warning. The blood content toggle doesn't say whether the $100 'blood visible' moment still pays.",
+    "fix": "Shorten the night (for example 01:00 to 04:00) or show call ages and police arrival times as countdowns instead of clock times. Show the eye on the HUD at all times. State that with blood turned off, 'blood visible' still scores and is drawn as a cut-away."
+   }
+  ],
+  "sound_parts": [
+   "Clip value per robbery hangs together. Starter gear at about 0.5 clarity gives roughly $100 of key moments, a $70 face bonus and about $100 coverage, so about $270 clean or $400 exclusive. That is close to the $300-$500 target, and a pursuit ending plausibly passes $1,200.",
+   "Rent of $900 a week against $200 to $500 net a night, starting with $300 and with no cheap first gear tier costing more than about $2,500 in total, supports 'first tier by end of week 2' in the early weeks.",
+   "Diminishing returns on coverage after 8 seconds, with most of the value in key moments, correctly punishes holding one static shot.",
+   "Banking tapes in the car makes the walk back a real risk and works with tape seizure at heat 60 or more.",
+   "Scoring as a pure calculation on a recorded timeline, testable with made-up tapes, is the right shape for automated balance tests.",
+   "The 40 'stare' tell before 100 'spotted' is a good readable warning, once the rates are fixed.",
+   "HALO losing value every game-hour gives a real reason to sell early clips there.",
+   "The heat bands are clear and escalate fairly, and heat falling 15 a night prevents permanent lock-out.",
+   "The ledger told back in the stations' cheerful corporate language is the right way to do the satire without a lecture; it only needs one mechanical consequence behind it."
+  ]
+ },
+ {
+  "lens": "Production and process (stage order, dependencies, chat sizing, shared-file collisions, definition of done, integration, recovery, creator waiting)",
+  "overall": "The plan is easy to follow: one orchestrator, a status board, brief, report and tester loop, a three-strikes rule, and Nima's checkpoints all hold up. Its weak points are where systems meet. Nobody owns the main game scene or the shared files (project.godot, cfg.gd, events.gd). Several stage-D and stage-E briefs depend on work that is scheduled later or runs in parallel (robbery sites, light zones, news desk, bot hooks). Integration is left to one bug pass at the very end. The plan also does not meet the user's request for about 10 chats: one new chat per lane per stage plus one fresh tester per brief comes to roughly 20 build chats and about 40 tester chats. Fixing the ownership and ordering items below before stage B is cheap; finding them during stage D or E would mean rework across lanes.",
+  "issues": [
+   {
+    "severity": "blocker",
+    "where": "PLAN.md section 2 (chat table and intro paragraph) and section 3 step 3",
+    "problem": "Nine build lanes, plus a new chat for each stage of each lane, plus one fresh Sonnet tester per brief, adds up to roughly 20 build chats and about 40 tester chats. That goes against the request for 'closer to 10 chats than 20' and multiplies the handoff and context-loading cost.",
+    "fix": "Merge to about 10 standing chats. Suggested set: Orchestrator; Graphics; Foundation and integration; Feel A (camcorder, scoring, filming from the car); Feel B (on-foot and car movement); Stealth and the line; World (traffic, NPCs, incidents, police: Opus); Career and front end (news desk, money, UI, text: Opus); one standing Sonnet tester per stage. Each lane keeps a HANDOFF.md so a chat can be refreshed only when its context fills, not on a fixed schedule."
+   },
+   {
+    "severity": "blocker",
+    "where": "PLAN.md sections 2 and 5; DESIGN.md section 19",
+    "problem": "cfg.gd, events.gd, project.godot (input map, autoloads, physics layer names, main scene, rendering settings) and the main game scene that puts district, player, traffic and incidents together are all needed by every lane. Only Foundation owns them, and 'touch only the files your brief lists' stops anyone else from adding a key, event or tuning number. Graphics runs in parallel and also needs project.godot for its quality settings. tools/ is claimed by both Foundation and Graphics (tools/blender/). The existing look-test scripts/ and scenes/street.tscn have no owner at all.",
+    "fix": "Split cfg into per-system files (cfg/camcorder.gd and so on) under one loader, so each lane owns its own numbers. Declare all events and input actions in CONTRACTS.md before stage B, and have the orchestrator alone apply edits to project.godot and events.gd between briefs. Name Foundation the owner of main.tscn and the assembly scene, and assign scripts/, scenes/ and the overlapping tools/ folders explicitly."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md section 4, stage D (I2 robbery vs G6 sites; S1 stealth vs G8 light zones)",
+    "problem": "I2 robbery needs the three sites (back door, interior, vantage point, movable-object spots), but G6 builds them in the same stage, in parallel. S1 stealth needs light zones, but those are only 'tuned for stealth' in G8 in stage E. The code chats will either stall or invent their own stand-ins that Graphics later breaks.",
+    "fix": "Move grey-box versions of the three sites, with doors, cover and light-zone volumes, into G2 (stage B), placed as named marker nodes by a convention set in CONTRACTS.md. G6 and G8 then only dress and retune them and must not move markers."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md section 4, stages C and D (L1 lane map vs G4/G7); DESIGN.md section 14",
+    "problem": "L1 builds the traffic lane map in stage C, but G7 adds the remaining blocks, alleys and district edge in stage D, so the lane map and pursuit route have to be rebuilt after traffic is done. The loop is also checked only by eye: a ring around about 350 m by 300 m is roughly 1.3 km, not the 2 to 3 km section 8 asks for.",
+    "fix": "Freeze the full road network (every street, the underpass, the loop) in G2 as a data file that both the lane map and the pursuit route are generated from. Later graphics briefs may dress roads but not move them. Settle the pursuit route length (laps or a longer loop) in the same brief."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md section 4, stages A and F (F2 test bot, B1 balance); DESIGN.md section 13 target curve",
+    "problem": "F2 builds the test bot in stage A, when there is nothing for it to play. Playing a whole night needs the car, camcorder, scanner, stealth and news desk, built in stages B to E by lanes the Foundation chat may not touch. Nobody is given the job of making the bot actually drive, film and sell before B1 expects it to play 20 nights.",
+    "fix": "Put a small bot-facing interface into CONTRACTS.md (for example drive_to, aim_at, record, sell_best) and make each lane's brief implement its piece in dev/. Add a Foundation brief at the end of stage E that puts the bot together and gets one night playing, before B1."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md section 4 (play build 2 checkpoint vs N1 in stage E; F3 packaging in stage F)",
+    "problem": "Play build 2 promises a robbery and a pursuit 'filmed and scored', but there is no screen that shows a score until N1 in stage E. Mac app packaging (F3) comes last, yet Nima, who cannot code, is asked to play builds 1 and 2 much earlier. He would have to be talked through opening the Godot editor, or wait.",
+    "fix": "Move a basic packaging script into F1 (stage A) so every checkpoint is a double-clickable .app. Add a debug clip-breakdown panel to C2 (or the dev harness) so play build 2 can show scores before the news desk exists."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md sections 3 and 4 (no integration steps; X1 only at the end)",
+    "problem": "Each brief is tested on its own, and the only whole-game pass is X1 in the final stage. Problems where systems meet (car plus camcorder, incident plus stealth plus police, night end to news desk to save) will pile up for weeks and only show at the end, when changing an interface touches four lanes.",
+    "fix": "End each stage with an integration brief owned by Foundation: wire the stage's systems into the main scene, run the bot smoke test and the three frame-rate views, and only then hold Nima's checkpoint. Add an 'interfaces changed' line to every report, which the orchestrator checks against CONTRACTS.md."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md section 4, stage E S2 vs stage D I2 and I4; DESIGN.md section 11",
+    "problem": "Provoke, withhold and rearrange change how a robbery flows (jumping to the trouble stage, delaying police, spawning a movable gun or cash bag). These are built in S2 after the incident and police code exists, and S2 owns only stealth/ and line/, so it cannot add the hooks it needs inside incidents/ and police/.",
+    "fix": "Have I1 and I2 put the line-crossing hooks into the incident frame (request_stage_skip, delay_police, a movable-object list) with stub callers, and record them in CONTRACTS.md. S2 then only calls those hooks."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md sections 2, 3 and 5 (crash and rollback); DESIGN.md section 19 (save)",
+    "problem": "Build chats may not commit, stash or reset. If a chat crashes or a brief fails three times, half-edited files are left in the working tree and the plan has no recovery step. Save and load is built in F1 before any of the data it must hold exists (heat, reputation, gear, debt, ledger), and nothing covers version upgrades or a save file corrupted by a crash mid-write.",
+    "fix": "The orchestrator commits (or tags) a clean point before each brief and, on failure, restores the brief's own files from that point. Saving should use a registry where each system registers its own section, write to a temp file and rename it, keep the previous save as a backup, and include a test that moves an older version's save forward."
+   },
+   {
+    "severity": "major",
+    "where": "PLAN.md section 1 (Done means); section 3 step 3 (testers get only pass checks)",
+    "problem": "'A new player finishes the teaching night and three more nights without help' has no tester who can do it: Nima has seen the design, and a Sonnet tester cannot play. 'No errors' over 20 bot nights is not defined (script errors, stuck actors, nights that never end, negative cash). Feel checks for camcorder, car and stealth cannot be reduced to pass checks a Sonnet tester can run.",
+    "fix": "Define done as numbers: zero push_error or script errors; every bot night ends within 15 real minutes; zero NPC stuck-timer resets over 5 s; the bot's net income lands inside the section 13 band. Keep feel as Nima's checkpoint only, with a one-page checklist of what to try and a yes/no or 'needs change' answer for each."
+   },
+   {
+    "severity": "minor",
+    "where": "PLAN.md section 2 rows I1, I4, N2, U1, L2, S2, G2; section 4 '~40 briefs'",
+    "problem": "Several briefs are each two or three systems. I1 is scanner, night clock, night generator and incident frame. I4 is police, heat, fines, arrest and clinic. N2 is money, rent, debt, shop and gear tiers. U1 is HUD, map and all menus. L2 is people, animation and bystanders. G2 is the whole district blockout. Each is likely to run out of context or fail review. Who animates the stand-in people is also listed under both G5 and L2.",
+    "fix": "Cap each brief at one system and about 6 pass checks: split I1 into scanner+clock and incident frame, I4 into police arrival+tape and heat+arrest, and U1 into HUD+map and menus. State that Graphics makes the stand-in meshes and animation clips, and City life only plays them."
+   },
+   {
+    "severity": "minor",
+    "where": "DESIGN.md section 18 last bullet; PLAN.md section 7 risk 4",
+    "problem": "'Every task reports frame rate' needs GSLOT_SOLO, which holds both machine-wide Godot slots (shared with Umbara). With Graphics and a code lane running in parallel, every frame-rate report waits for both other jobs to finish, which will repeatedly leave Nima waiting.",
+    "fix": "Only Graphics briefs and the end-of-stage integration brief take solo frame-rate measurements. Other code briefs run a quick non-solo smoke check and report 'frame rate not measured'."
+   }
+  ],
+  "sound_parts": [
+   "The brief, build, report, tester and orchestrator-review loop with a three-strikes return to Nima is sound and easy to follow.",
+   "Only the orchestrator commits, with at most two Godot copies through the existing tools/gslot.sh (which does share the lock folder with Umbara).",
+   "Starting with Graphics G1 as a 60 fps gate, with Nima choosing trade-offs from before and after pictures, puts the biggest technical risk first.",
+   "Scoring as a plain calculation on a recorded timeline (DESIGN section 5) makes it testable headless, which suits a creator who cannot code.",
+   "Putting the feel-critical lanes (camcorder, car, stealth) on Fable, with Nima play-testing at builds 1 and 2, matches what a bot cannot judge.",
+   "Placeholders for people and sound are set by decision and scoped out in DESIGN section 20, which keeps the milestone bounded."
+  ]
+ }
+]

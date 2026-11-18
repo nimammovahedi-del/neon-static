@@ -1,0 +1,1419 @@
+{
+  "summary": "Research and verify engine options for a first-person on-foot + driving browser game built by an AI coding agent",
+  "agentCount": 9,
+  "logs": [
+    "5/5 options researched; 4 independently verified"
+  ],
+  "result": {
+    "results": [
+      {
+        "key": "unity-web",
+        "research": {
+          "option": "Unity 6.x with Web platform export (WebGL2, optional WebGPU)",
+          "current_version_and_date": "Unity 6000.6 is the current stable line (6000.6.3f1 released 2026-09-24; docs for 6000.7 and alpha 6000.7.0a1 also exist). Per Unity staff, WebGPU became a fully supported, non-experimental feature in 6000.6 (announced 2026-08-24). WebGL2 remains the default API; WebGPU must be added manually in Player Settings with WebGL2 kept as fallback. Whether 6000.6 is labelled LTS was not confirmed.",
+          "summary": "Unity Web is a mature, officially supported target, and WebGPU is now fully supported (6000.6, Aug 2026). That makes it technically capable of a first-person driving game with PhysX WheelCollider, URP, and baked lighting. The costs are real. An empty URP build is about 5.5-8.8 MB compressed per a third-party tracker, and a real 3D game with city and car assets will be tens of MB. Unity Web has no C# threads, only Burst jobs and native engine threads. Realtime global illumination is unavailable on Web. Memory is tight and iOS Safari is known to silently reload tabs under memory pressure, so phones are a \"maybe\" at best. The agent workflow is the weakest point for this creator. Unity is not installed. The Unity Editor is a GUI app, and Unity's official MCP server (beta) and the community CoplayDev unity-mcp both bridge to a running Editor. The official MCP needs a Unity Cloud-connected project, a trial or subscription to the AI beta, and in-Editor approval of the connection. Forum reports say batchmode and headless use of it do not work cleanly. Scenes, prefabs, and import settings are Unity-specific serialized data that the agent either drives through the Editor or edits as YAML, which is fragile. IL2CPP Web builds take minutes (an empty project took 1-6 minutes in one measurement). A non-coder would still have to install Unity Hub and the Editor with the Web module, sign in, activate a license, open the project in the Editor, accept the MCP connection, and handle Editor dialogs and crashes. Licensing is fine: Personal is free up to $200K revenue and funding, the runtime fee was cancelled, and the splash screen is optional in Unity 6. Net: capable engine, but it needs an Editor-in-the-loop with a human present, which is a poor fit for a terminal-only agent and a non-coder. Verdict on fit is the orchestrator's call.",
+          "claims": [
+            {
+              "topic": "WebGPU status",
+              "claim": "As of Unity 6000.6 the WebGPU graphics API is no longer experimental and is fully supported, but it is not enabled by default; WebGL2 stays the default. WebGPU must be added to the Graphics APIs list with WebGL2 kept as fallback; the fallback is silent.",
+              "evidence": "Unity Web Graphics staff post: 'as of Unity 6000.6, the WebGPU graphics API is no longer experimental'; 'WebGPU is not enabled by default... WebGL 2 remains the default'.",
+              "source_url": "https://discussions.unity.com/t/webgpu-out-of-experimental-in-unity-6-6/1734694",
+              "source_date": "2026-08-24",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPU limitations",
+              "claim": "WebGPU in Unity lacks dynamic resolution, async compute and cubemap arrays; synchronous GPU readback (Texture2D.GetPixels, ScreenCapture.CaptureScreenshot) does not work and AsyncGPUReadback is required; some texture formats and extensions are unavailable on Safari or Firefox; Web supports baked GI only (no realtime GI, non-directional lightmaps only).",
+              "evidence": "Unity 6000.7 docs page 'Limitations of the WebGPU graphics API' (updated about 18 days before fetch).",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.7/manual/platform-specific/webgl/develop/graphics/web-gpu/limitations",
+              "source_date": "2026-11 (page 'last updated 18 days ago')",
+              "confidence": "high"
+            },
+            {
+              "topic": "threading",
+              "claim": "Managed C# threads are not supported on Unity Web (no multithreaded GC in WebAssembly); only native C/C++ engine threads (including physics and rendering) and Burst-compiled C# jobs run multithreaded. It requires enabling 'Enable Native C/C++ Multithreading' and serving COOP: same-origin, COEP: require-corp and CORP: cross-origin headers (SharedArrayBuffer).",
+              "evidence": "Unity 6000.6 docs 'Introduction to Web multithreading' and 'Technical limitations'. Staff also state Wasm64 builds (memory >4GB) do not support threading at all.",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/webgl/develop/web-multithreading/intro",
+              "source_date": "2026-11 (6000.6 docs)",
+              "confidence": "high"
+            },
+            {
+              "topic": "memory limits",
+              "claim": "Heap can be configured up to 16GB (Wasm64 above 4GB, which slows runtime and disables threading), but real availability depends on browser, OS and device. A developer on WebGPU reported a 2048MB Wasm memory limit pre-6.6, and staff acknowledged iOS out-of-memory tab reboots are hard to debug. Unity gives no official iOS memory figure.",
+              "evidence": "Unity docs memory page (up to 16GB, varies by device); Unity forum staff thread (Wasm64 no threads, iOS OOM); performance page (>4GB slightly reduces performance).",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/webgl/develop/memory",
+              "source_date": "2026-11",
+              "confidence": "medium"
+            },
+            {
+              "topic": "mobile browser support",
+              "claim": "Officially supported mobile browsers are iOS Safari 15+ and Android Chrome 58+, but iOS Safari has recurring crash/reload problems: a Unity 6 forum report of random crashes on iOS 18 (WebKit bug says they began on iOS 18.4) and Safari silent page reloads under memory pressure.",
+              "evidence": "Unity browser-compat doc; forum threads on iOS 18 crashes and WebKit bug 237180/291677 (not opened in full, found in search results only).",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/webgl/intro/browsercompatibility",
+              "source_date": "2026-11",
+              "confidence": "medium"
+            },
+            {
+              "topic": "download size, empty project",
+              "claim": "Unity's own-version tracker shows built-in-pipeline WebGL2 builds of 3.2-3.8MB (6000.6.0f1: 3.76MB) and URP WebGL2 builds of 5.58MB (6000.5.11f1) to 8.79MB (6000.4.12f1), with URP 'minimum size' 4.48-6.76MB. URP adds about 2.5MB over built-in. Units are Brotli-served but compressed/uncompressed is not explicitly labelled on the page. Load times are not reported.",
+              "evidence": "UnityWebGL-LoadingTest README tables (maintained by a Unity-affiliated community dev), fetched through a summarizer, so numbers are second-hand.",
+              "source_url": "https://github.com/JohannesDeml/UnityWebGL-LoadingTest",
+              "source_date": "2026 (covers 6000.6.0f1)",
+              "confidence": "medium"
+            },
+            {
+              "topic": "download size, default template",
+              "claim": "A default 3D URP template Web build was 10.7MB Brotli (3.7MB data, 6.9MB code), about 6 min build, on Unity 6.0.23 (Oct 2024). Aggressive stripping of an empty 2D BiRP project reached 2.0-2.3MB, but that required removing Input System and Unity UI; the author notes that URP and UI Toolkit add code size. A commenter (May 2026) reported about 13MB wasm for a UI-using game even after optimizations.",
+              "evidence": "Aras Pranckevicius gist and comments, last active July 2026.",
+              "source_url": "https://gist.github.com/aras-p/740c2d4f9977ce92b7de72b1394dd365",
+              "source_date": "2024-10 (measurement); comments to 2026-05",
+              "confidence": "high"
+            },
+            {
+              "topic": "real game size / load time",
+              "claim": "No measured size or load time for a realistic small Unity 3D web game was found. Engine baseline of about 5-11MB for URP plus assets (city, cars, textures, audio) is additional, and Unity recommends Addressables, ASTC textures and Brotli to keep first load small. No verified first-load seconds figure was found, so none is given.",
+              "evidence": "Absence of data; Unity mobile web optimization doc recommendations.",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/webgl/building-distribution/web-optimization-mobile",
+              "source_date": "2026-11",
+              "confidence": "low"
+            },
+            {
+              "topic": "licensing",
+              "claim": "Unity Personal is free up to $200,000 revenue and funding; Pro is $2,310/seat/year ($210/month), with a 5% increase from 2026-01-12; the Runtime Fee was cancelled (2024-09-12) for all versions; splash screen is optional on Personal with Unity 6.",
+              "evidence": "Unity pricing-updates page and Unity blog 'Unity is canceling the Runtime Fee'.",
+              "source_url": "https://unity.com/products/pricing-updates",
+              "source_date": "2026 (page); blog 2024-09",
+              "confidence": "high"
+            },
+            {
+              "topic": "agent workflow, official MCP",
+              "claim": "Unity's official MCP server (part of the in-editor AI Assistant package, in open beta as of 2026-05-11) connects Claude Code to a RUNNING Unity Editor via a relay binary and bridge. It needs Unity 6000.0+, the AI Assistant package, a project connected to Unity Cloud, and an active trial or subscription to Unity's AI tools beta, and the user must accept the connection in Project Settings. Tools cover scene/GameObject edits, script editing, console reading and build settings.",
+              "evidence": "Unity blog 'Unity's AI tools in beta: How to get started with MCP'.",
+              "source_url": "https://unity.com/blog/unity-ai-mcp-how-to-get-started",
+              "source_date": "2026-05-11",
+              "confidence": "high"
+            },
+            {
+              "topic": "agent workflow, headless gaps",
+              "claim": "A user post (2026-07-16) says the official MCP bridge is tied to the Editor lifecycle, does not work out of the box with batchmode -executeMethod without -quit, requires UI-driven approval, and that Unity shows many modals that block reliable MCP use; the linked issue 'Connection revoked' is cited. This is one user's complaint, not Unity's statement.",
+              "evidence": "Forum thread, read through a summarizer.",
+              "source_url": "https://discussions.unity.com/t/there-is-a-ridiculous-amount-of-toil-in-using-the-official-unity-mcp-that-has-to-go-away-here-is-the-easy-fix/1731262",
+              "source_date": "2026-07-16",
+              "confidence": "medium"
+            },
+            {
+              "topic": "agent workflow, community MCP",
+              "claim": "CoplayDev/unity-mcp (MIT, about 16k stars, v10.3.0 on 2026-10-04) offers 50 MCP tools (scenes, GameObjects, scripts, assets, tests, profiling, build) for any MCP client incl. Claude, supports Unity 2021.3 through 6.x, and needs Python 3.10+ with uv. The README summary does not state batchmode or GUI-less support, so it presumably still needs the Editor open.",
+              "evidence": "GitHub README via summarizer; batchmode not mentioned.",
+              "source_url": "https://github.com/CoplayDev/unity-mcp",
+              "source_date": "2026-10-04",
+              "confidence": "medium"
+            },
+            {
+              "topic": "agent workflow, CLI builds",
+              "claim": "Unity builds can be run from the command line (-batchmode, -executeMethod) and in CI via game-ci/unity-builder with targetPlatform WebGL, but it requires license activation via the command line or CI secrets (Personal needs email/password and activation file). A GitHub issue reports a WebGL CI build failing after about 45 min with no errors. Web builds use IL2CPP, 1-6+ min for empty projects.",
+              "evidence": "Game CI docs; Unity license command-line docs; unity-builder issue 667 snippet; the Aras gist.",
+              "source_url": "https://game.ci/docs/github/builder/",
+              "source_date": "2025-2026 (undated docs)",
+              "confidence": "medium"
+            },
+            {
+              "topic": "physics/vehicles",
+              "claim": "Unity's WheelCollider (PhysX) is documented with a car tutorial; native C/C++ threading covers physics on Web. No source was found measuring WheelCollider driving or post-processing (bloom, volumetrics, rain) performance on Web. Compute-based features (VFX Graph, GPU Resident Drawer, STP upscaler, compute skinning, APV) work only on WebGPU, not WebGL2.",
+              "evidence": "Unity WheelCollider docs; Unity staff WebGPU thread.",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.0/manual/physics-section/physics-overview/collision-section/collider-shapes/wheel-colliders/wheel-collider-tutorial",
+              "source_date": "2026-08 (WebGPU thread)",
+              "confidence": "medium"
+            }
+          ],
+          "performance_notes": "Staff say WebGPU vs WebGL2 performance depends on context: each wins in some cases, WebGL2 may keep a CPU advantage with very many draw calls, and WebGPU has more optimization room (2026-08-25). Unity assumes a 60fps display rate for browsers and cannot query the browser frame rate. Background tabs can be throttled. Unity cannot profile draw calls on Web, and the Editor cannot attach the Profiler to a Web player. No measured fps for a first-person driving scene with WheelCollider and post-processing was found, so none is given. Compute-dependent features (GPU Resident Drawer, STP) are WebGPU only and are off by default. Dynamic resolution is not supported on WebGPU. Wasm64 above 4GB costs speed and disables threads. Safari and Firefox lack some WebGPU extensions and texture formats.",
+          "load_time_and_size_notes": "Measured baselines: empty URP about 5.6-8.8MB (tracker, 6000.x) and 10.7MB for the default URP template on 6.0.23 (Oct 2024, Brotli). Built-in pipeline is about 3.2-3.8MB. URP adds about 2.5MB. UI Toolkit and Input System inflate IL2CPP code. No first-load seconds figure found. Real game size: not found, an inference of tens of MB with 3D assets. Unity Play hosting caps uploads at 1GB compressed. Brotli requires HTTPS in Chrome and Firefox. Unity recommends Addressables plus ASTC textures. Editor install: one user reported 8.49GB for a Unity 6.2 macOS editor with about 30GB temporary space needed (single anecdote). Official Web Build Support module size was not found.",
+          "agent_workflow_notes": "Unity is not installed here. Required human steps: install Unity Hub and the Editor with the Web Build Support module, sign in with a Unity account, activate a Personal license, and open the project in the Editor GUI. If using the official MCP: connect the project to Unity Cloud, obtain a trial or subscription to the AI beta, and accept the pending MCP connection in Project Settings. The agent can write C# and likely run a batchmode -executeMethod build script (IL2CPP, minutes per build), with the license activated first. Hand-editing scene and prefab YAML is possible but I found no source on its reliability, so treat it as fragile and unverified. Importing GLB/FBX, materials, lighting bakes, NavMesh bakes, WheelCollider rigging and URP settings are normally Editor operations, so they need MCP or custom Editor scripts. Testing: Unity Test Framework in batchmode, MCP console reading, and Playwright against the built Web output. Autopilot (an open-source game tester) is mentioned in the CoplayDev README, unverified. Modals and crashes in the Editor are a recurring risk. Compared with Godot 4.7.2 (installed, text-based scenes, CLI export), Unity needs far more manual human setup. This comparison is not sourced.",
+          "strengths_for_this_game": [
+            "WebGPU is fully supported in 6000.6, with WebGL2 fallback. WheelCollider vehicle physics is mature and documented. URP lighting and post-processing is available.",
+            "Native C/C++ multithreading (physics, rendering) and Burst jobs work on Web, so the engine's heavy systems can use threads.",
+            "Free Personal license up to $200K, optional splash screen, no runtime fee.",
+            "Large asset and tooling ecosystem. Official and community MCP servers (about 16k stars) already exist for Claude Code.",
+            "Imports GLB/FBX; supports Addressables for streaming, so a district could load incrementally."
+          ],
+          "risks_for_this_game": [
+            "The agent cannot do the whole job without the Editor GUI. A non-coder must install and license Unity, keep the Editor open, and approve MCP connections. Headless MCP use is reported broken or awkward.",
+            "Large baseline size: URP about 5.6-8.8MB empty, with assets pushing a night city game well beyond that. Load time is unmeasured, so performance on cold start is an unknown risk.",
+            "Memory limits are tight and iOS Safari crashes or reloads; phones are risky, and Wasm64 (over 4GB) disables threads.",
+            "No C# threads on Web. Realtime GI is unsupported, so the neon/rain look would need baked lighting, and volumetrics or rain post-processing were not verified on Web.",
+            "Safari and Firefox lack some WebGPU extensions and formats, and WebGPU is not the default, so the fallback WebGL2 path must also be tested.",
+            "Build iteration is slow (IL2CPP minutes), and one report shows WebGL CI builds hanging for 45+ minutes. Unity's AI MCP requires a paid trial or subscription to the AI beta."
+          ],
+          "open_questions": [
+            "Firecrawl credits ran out partway; the later pages were read through WebFetch summaries, so some figures are second-hand.",
+            "Real first-load time and compressed size of a small Unity 3D web game with city/car assets: not found.",
+            "WheelCollider driving behavior, bloom, rain and volumetrics performance on Unity Web: no measurements found.",
+            "Reliability of hand-editing scene and prefab YAML: no source found.",
+            "Whether CoplayDev unity-mcp works in batchmode or without GUI: not stated in the README summary.",
+            "Official Unity Editor and Web Build Support module download sizes on macOS: not found.",
+            "Whether 6000.6 is LTS and exact current-release status."
+          ]
+        },
+        "verification": {
+          "option": "Unity 6.x with Web platform export (WebGL2, optional WebGPU)",
+          "verdicts": [
+            {
+              "claim": "Current stable is 6000.6.3f1 (2026-09-24); LTS status of 6000.6 unconfirmed",
+              "verdict": "partly_correct",
+              "correction": "The report's patch is out of date. Release notes show 6000.6.6f1 (released 2026-10-15) and 6000.6.7f1 (released 2026-10-21). Unity 6.6 was announced on 2026-09-01. It is a 'Supported' release, not LTS: it gets LTS-level fixes only until 6.7 arrives, and Unity calls it the last non-LTS release in Unity 6. Unity 6.7 LTS has been in beta since about 2026-09-27 and is expected in Q4 2026. Its GA was not confirmed as of 2026-11-17. A project started now would likely move to 6.7 LTS.",
+              "source_url": "https://unity.com/releases/editor/whats-new/6000.6.7"
+            },
+            {
+              "claim": "WebGPU is no longer experimental and fully supported as of 6000.6. It is not enabled by default (WebGL2 stays default), and Unity falls back automatically to the next API in the list.",
+              "verdict": "confirmed",
+              "correction": "Confirmed by staff post brendanduncan_u3d (2026-08-24). The 6.6 launch post (2026-09-01) calls WebGPU 'production ready' and adds a WebGPU Device Filter asset that limits which browsers and GPUs use it. Browsers expose WebGPU only in a secure context (HTTPS). 6000.6.7f1 (2026-10-21) still ships WebGPU fixes for compressed-texture mipmaps, the ASTC sRGB mapping and memory use, so the backend is still maturing.",
+              "source_url": "https://discussions.unity.com/t/webgpu-out-of-experimental-in-unity-6-6/1734694"
+            },
+            {
+              "claim": "WebGPU limitations: no dynamic resolution, async compute or cubemap arrays; no sync readback (GetPixels, CaptureScreenshot), so AsyncGPUReadback is needed; Safari and Firefox lack some formats; Web supports baked GI only, with non-directional lightmaps",
+              "verdict": "confirmed",
+              "correction": "All of these match the 6000.7 limitations page, which said 'last updated 18 days ago' when fetched. Relevant to this game: the camera and footage mechanic cannot use ScreenCapture.CaptureScreenshot or GetPixels on WebGPU. It must use CaptureScreenshotIntoRenderTexture with AsyncGPUReadback.",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.7/manual/platform-specific/webgl/develop/graphics/web-gpu/limitations"
+            },
+            {
+              "claim": "Wasm64 above 4GB disables multithreading and is slower",
+              "verdict": "confirmed",
+              "correction": "Staff confirmed both points on 2026-09-28. The 6.6 post adds that Wasm64 (up to 16GB) needs Chrome/Edge 128+ or Firefox 129+, and Safari does not support it.",
+              "source_url": "https://discussions.unity.com/t/unity-6-6-is-now-available/1735357"
+            },
+            {
+              "claim": "No managed C# threads on Web; only native engine threads and Burst jobs; needs COOP/COEP headers",
+              "verdict": "unverifiable",
+              "correction": "I did not reopen the multithreading page. This is consistent with long-standing Unity Web docs, so it is plausible."
+            },
+            {
+              "claim": "Official browser support: desktop Chrome, Firefox, Safari (macOS) and Edge; mobile iOS Safari 15+ and Android Chrome 58+",
+              "verdict": "confirmed",
+              "correction": "The compat page lists exactly these browsers. It does not mention WebGPU or Wasm64. The iOS 18.4 crash and WebKit bug details were not re-verified. Staff did confirm on 2026-09-28 that memory-related tab reboots are a problem 'especially on iOS'.",
+              "source_url": "https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/webgl/intro/browsercompatibility"
+            },
+            {
+              "claim": "Tracker: built-in WebGL2 is 3.2-3.8MB (6000.6.0f1: 3.76MB); URP WebGL2 is 5.58MB (6000.5.11f1) to 8.79MB (6000.4.12f1)",
+              "verdict": "partly_correct",
+              "correction": "The numbers match, but the report left out the newest URP row. On 6000.6.0f1, URP WebGL2 is 7.52MB and URP WebGPU is 7.31MB. The 5.58MB row (6000.5.11f1) is the outlier, so a realistic current URP baseline is about 7.3-7.5MB. The page does not say whether the figures are compressed. It reports no load times, apart from up to about 2 minutes on Android Smart TVs.",
+              "source_url": "https://github.com/JohannesDeml/UnityWebGL-LoadingTest"
+            },
+            {
+              "claim": "Default URP template is 10.7MB Brotli on 6.0.23 (Oct 2024), and aggressive stripping reaches 2.0-2.3MB",
+              "verdict": "unverifiable",
+              "correction": "The gist was not re-opened in this pass. The measurement is from 2024-10 and is now two years and several minor versions old.",
+              "source_url": "https://gist.github.com/aras-p/740c2d4f9977ce92b7de72b1394dd365"
+            },
+            {
+              "claim": "Personal is free up to $200K revenue and funding; Pro is $2,310/yr or $210/mo with a 5% increase from 2026-01-12; the runtime fee was cancelled 2024-09-12; the splash screen is optional in Unity 6",
+              "verdict": "confirmed",
+              "source_url": "https://unity.com/products/pricing-updates"
+            },
+            {
+              "claim": "The official Unity MCP (open beta, 2026-05-11) needs Unity 6000.0+, the AI Assistant package, a Unity Cloud-connected project, an AI beta trial or subscription, and acceptance of the connection in Project Settings. Claude Code is a supported client.",
+              "verdict": "confirmed",
+              "correction": "Confirmed. The blog does not cover running without the Editor or in batchmode. On cost: Unity AI open beta began 2026-05-04 with a 14-day Personal trial including 1,000 credits, then reportedly $10/month. A pricing tracker says the dollar figure was removed from the pricing page in late July 2026. The current price is unverified from Unity directly.",
+              "source_url": "https://unity.com/blog/unity-ai-mcp-how-to-get-started"
+            },
+            {
+              "claim": "CoplayDev/unity-mcp: MIT license, about 16k stars, v10.3.0 on 2026-10-04, 50 tools, Unity 2021.3 to 6.x, Python 3.10+ with uv; batchmode not stated",
+              "verdict": "confirmed",
+              "correction": "Confirmed. It describes itself as a bridge to the Unity Editor. The README mentions a remote-hosted server and a docker-compose file, but neither is said to run Unity headless. It needs no Unity Cloud connection or AI subscription, so it is the free path.",
+              "source_url": "https://github.com/CoplayDev/unity-mcp"
+            },
+            {
+              "claim": "Headless or batchmode use of the official MCP is awkward (forum post, 2026-07-16)",
+              "verdict": "unverifiable",
+              "correction": "This is one user's forum complaint and was not re-opened. Unity's own blog neither confirms nor denies it."
+            },
+            {
+              "claim": "CLI and CI builds need license activation via the command line; Personal needs email/password and an activation file",
+              "verdict": "partly_correct",
+              "correction": "Unity 6.6 docs say command-line activation does not support Personal: a Personal license is activated only by signing in to Unity Hub. The -username/-password/-serial flags are for Pro/Plus. Offline .ulf activation is limited to Enterprise and Industry seats. So a human must sign in to Hub at least once on this Mac. game-ci's email/password route for Personal works in CI, but Unity does not officially document it for Personal.",
+              "source_url": "https://docs.unity3d.com/Manual/ManualActivationCmdMac.html"
+            },
+            {
+              "claim": "The agent cannot do the whole job without the Editor GUI, and a human must install Hub and the Editor",
+              "verdict": "partly_correct",
+              "correction": "This overstates the install burden and understates the tooling. Unity now documents a standalone 'unity' CLI. It can install Editors and modules (for example 'unity install lts -m webgl'), sign in through a browser flow, create projects (with --no-cloud for local-only), open and close the Editor, and run batchmode builds ('unity build', with build profiles). It can also run Edit Mode and Play Mode tests with NUnit reports, run registered Editor commands headlessly ('unity run --command'), recompile, and watch for changes. Commands that talk to a running Editor or an agent ('mcp', 'skill', 'pipeline') need the Unity Pipeline package. The docs show 1.0.0-beta builds, and current GA status is unclear. A human is still needed for the browser sign-in and Personal license activation, and authoring scenes, prefabs and imports still runs through the Editor (MCP or Editor scripts).",
+              "source_url": "https://docs.unity.com/en-us/unity-cli/reference/editor-project-commands"
+            },
+            {
+              "claim": "IL2CPP Web builds take minutes, and one CI issue hung for 45+ minutes",
+              "verdict": "partly_correct",
+              "correction": "Builds do take minutes. Unity 6.6 adds a new shader build system: on Unity's own Survival Kids project, a clean build fell from about 1h46m to about 32m with dynamic branching conversion. Iteration is still slow compared with web-native tools. The 45-minute hang is a single issue and was not re-verified.",
+              "source_url": "https://discussions.unity.com/t/unity-6-6-is-now-available/1735357"
+            },
+            {
+              "claim": "No measured first-load time, fps for driving and post-processing, or real-game size was found",
+              "verdict": "confirmed",
+              "correction": "I also found no such measurements, and none should be invented."
+            }
+          ],
+          "important_facts_missed": [
+            "The version data is stale. The latest 6.6 patch is 6000.6.7f1 (2026-10-21). 6.6 is 'Supported', not LTS. 6.7 LTS is in beta and expected in Q4 2026, so a new project would probably target 6.7 LTS, and that may land mid-project.",
+            "Unity 6.6 added Progressive Asset Loading for Web, which downloads assets per scene instead of all at startup with no code changes. This directly addresses first-load time for a city game, and the report did not mention it.",
+            "Wasm64 (memory above 4GB) is not supported in Safari. It also needs Chrome/Edge 128+ or Firefox 129+.",
+            "Unity now has an official standalone 'unity' CLI. It covers installing Editors and the webgl module, browser sign-in, project create/open, batchmode build, test, run --command, recompile and watch, plus mcp/skill/pipeline commands for agents through the Unity Pipeline package. This cuts install and build friction for a terminal agent. Release status is unclear (1.0.0-beta builds shown).",
+            "Unity Personal license activation is Hub-login only. Unity documents no headless Personal activation, so a human sign-in is unavoidable.",
+            "'unity projects create' enables Unity Cloud by default and needs a signed-in account; --no-cloud is required for a local-only project.",
+            "Unity AI (needed for the official MCP) is a 14-day trial with 1,000 credits, then a paid subscription. The $10/month figure was reportedly removed from the pricing page in late July 2026. The community CoplayDev MCP avoids this cost and the Unity Cloud requirement.",
+            "On WebGPU, the camera/viewfinder mechanic cannot use synchronous screenshot or readback APIs (CaptureScreenshot, GetPixels). It must use CaptureScreenshotIntoRenderTexture with AsyncGPUReadback, which is a design constraint for this specific game.",
+            "The WebGPU backend still gets functional fixes in patch releases: compressed-texture mipmaps, ASTC sRGB mapping and memory use in 6000.6.7f1. 'Fully supported' does not mean mature.",
+            "The newest URP tracker row (6000.6.0f1: 7.52MB WebGL2, 7.31MB WebGPU) was omitted. The 5.58MB figure is an outlier for 6000.5."
+          ],
+          "bias_check": "The report is mostly accurate and well hedged on technical limits. It slightly undersells Unity's agent tooling: it misses the new official Unity CLI, which handles install, build, test and headless command runs, and the 6.6 Progressive Asset Loading feature. It slightly oversells the stability of the version and baseline-size picture: it uses a stale patch number, omits the newest 7.5MB URP row, and does not flag that 6.6 is not LTS. On the main conclusion, that a human must be in the loop and the Editor is needed for authoring, its direction is right. Its specific claim about Personal command-line activation is wrong, and the correction makes the human requirement firmer, not weaker. Net: roughly balanced, slightly too pessimistic on CLI automation and slightly too optimistic on version currency.",
+          "corrected_bottom_line": "Unity 6.6 (latest patch 6000.6.7f1, 2026-10-21; a Supported, non-LTS release, with 6.7 LTS expected in Q4 2026) can technically handle this game on desktop browsers. WebGPU is production-supported with WebGL2 fallback, and Progressive Asset Loading eases first load. A current empty URP build is about 7.3-7.5MB before any assets. Baked GI only, no sync GPU readback on WebGPU, Wasm64 not on Safari, and iOS memory reboots make phones risky. A terminal agent can now do more than the report implied: the official 'unity' CLI installs Editors and the Web module, builds, runs tests and runs Editor commands headlessly, and the free CoplayDev MCP drives a running Editor. But a human must still sign in through a browser or Hub to activate a Personal license. Scene, prefab and import authoring also still depends on a running Editor GUI, which brings modal dialogs and crash risk. Compared with tools already installed here and driven by text files, Unity remains a heavier, more human-dependent workflow for a non-coder."
+        }
+      },
+      {
+        "key": "threejs",
+        "research": {
+          "option": "Three.js (plain JS/TS + Vite), optionally react-three-fiber",
+          "current_version_and_date": "three r187 (npm three@0.187.0), published 2026-10-30; r186 on 2026-09-08. Releases in 2026 every 7-11 weeks (r183 Feb 18, r184 Apr 16, r185 Jun 25, r186 Sep 8, r187 Oct 30). Source: Utsubo blog updated 2026-11-06 (11 days old), and the GitHub releases page marks r187 as Latest. Breaking changes nearly every release (r183 PostProcessing->RenderPipeline, Clock->Timer; r186 removed PCFSoftShadowMap and minified builds; r187 removed CubeUVReflectionMapping). three.js ships llms.txt docs for AI tools since r183.",
+          "summary": "Three.js is the most widely used web 3D library (12.2M npm weekly downloads in Sept 2026, about 39x Babylon core, per one studio's blog) and the de facto target of AI-agent game building. It is a rendering library, not an engine: the scene/level pipeline, save system, UI, AI, audio logic, animation state machines and vehicle tuning all have to be built, with the agent writing everything as plain code. A night rainy neon city is feasible on desktop if the agent follows disciplined budgets (instancing/BatchedMesh, KTX2, Meshopt, baked or few dynamic lights, capped pixel ratio), but there is no turnkey open-city template, and I found no documented large first-person game with both on-foot play and driving plus traffic AI built this way. The closest verified examples are small or partial: Roadarium (AI-agent-written driving sim, WebGL, phone failures reported) and On-Call Drive (neon city, third-person). WebGPU now ships in all four major browser engines, but WebGPURenderer still has documented slower cases versus WebGLRenderer and API churn, so the safe baseline is WebGL2 (or WebGPURenderer with its automatic WebGL2 fallback) plus profiling. Unflattering finding: the Rapier JS repo was archived July 12 2026 and merged into the main Rapier repo, so the package and vehicle controller status must be verified before depending on it. The agent workflow is the strongest point (text-only code, Playwright/headless Chromium, deterministic hooks), but GPU-less headless rendering is slow and 'game feel' needs human playtesting. Evidence that agents can build substantial Three.js games is mostly self-reported and skewed to small, stylized games; no measured load-time or performance data for a city-scale AI-built game was found.",
+          "claims": [
+            {
+              "topic": "current version",
+              "claim": "Latest three.js release is r187 (three@0.187.0), published October 30, 2026; r186 was September 8, 2026.",
+              "evidence": "Utsubo blog (updated 2026-11-06) release table; GitHub releases page shows r187 marked Latest.",
+              "source_url": "https://www.utsubo.com/blog/threejs-2026-what-changed",
+              "source_date": "2026-11-06",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPU browser availability",
+              "claim": "WebGPU ships by default in Chrome/Edge desktop (v113 Win/macOS/ChromeOS; Linux v144 Intel, v147 NVIDIA Wayland), Chrome Android 12+ (v121), Safari 26 (macOS/iOS/iPadOS, Sept 2025), and Firefox 141 on Windows plus Apple Silicon macOS (145; all macOS 147). Firefox Linux/Android remain behind a flag.",
+              "evidence": "gpuweb Implementation Status wiki (search excerpt) and Utsubo table; MDN excerpt shows Firefox for Android no support.",
+              "source_url": "https://github.com/gpuweb/gpuweb/wiki/Implementation-Status",
+              "source_date": "2026 (live wiki)",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPURenderer maturity",
+              "claim": "WebGPURenderer falls back automatically to a WebGL 2 backend when WebGPU is unavailable (forceWebGL option exists), so one codebase covers all browsers; but it has breaking changes nearly every release (r185 premultiplied alpha change, r186 removed exports, r187 PMREM rebuild).",
+              "evidence": "Official WebGPURenderer docs on fallback; Utsubo upgrade watch-out table with items marked 'hit in our own upgrade'.",
+              "source_url": "https://threejs.org/docs/pages/WebGPURenderer.html",
+              "source_date": "2026",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPURenderer performance regressions",
+              "claim": "Forum users reported WebGPURenderer slower than WebGLRenderer in some scenes: 20,000 non-instanced cubes ran ~60 FPS on WebGL vs ~15 FPS on WebGPU (M1 Pro, r173, Feb 2025); a maintainer attributed it to per-object uniform buffers and said the renderer was still in active development. Later similar threads exist (e.g., May 30 2026 re r183). Utsubo itself says to profile before migrating.",
+              "evidence": "three.js forum thread with dated maintainer replies; issue #30560 filed. Thread is from Feb 2025 and no resolution recorded, so current status unknown.",
+              "source_url": "https://discourse.threejs.org/t/why-webgpurenderer-performance-significantly-lower-than-webglrenderer/77629",
+              "source_date": "2025-02-18",
+              "confidence": "medium"
+            },
+            {
+              "topic": "vehicle physics",
+              "claim": "Rapier JS offers DynamicRayCastVehicleController (ray-cast wheels with suspension stiffness/compression/relaxation, engine force, brake, steering, friction slip, side friction), and an official three.js example 'physics_rapier_vehicle_controller' exists (WASD, space brake). Docs say it directly updates the chassis rigid-body velocity.",
+              "evidence": "Rapier class docs; three.js example page. Interaction caveats with other bodies are my inference, not stated.",
+              "source_url": "https://rapier.rs/javascript3d/classes/DynamicRayCastVehicleController.html",
+              "source_date": "2026 (live docs)",
+              "confidence": "medium"
+            },
+            {
+              "topic": "physics maintenance risk",
+              "claim": "The dimforge/rapier.js GitHub repo was archived by its owner on July 12, 2026; its README says the JS bindings were merged into the main dimforge/rapier repo under the 'typescript' directory. Verify current npm package name/version before use.",
+              "evidence": "Repo page fetched: read-only archive banner and README statement.",
+              "source_url": "https://github.com/dimforge/rapier.js",
+              "source_date": "2026-07-12",
+              "confidence": "high"
+            },
+            {
+              "topic": "physics alternatives",
+              "claim": "Jolt is available in JS via jolt-physics (JoltPhysics.js, Emscripten WASM) with multithread variants and vehicle-related classes exposed, but needs manual memory management (Jolt.destroy), the README gives no wasm size, and the build was only compiled under Linux. I did not verify arcade-handling quality or WASM size for Jolt or Rapier; a Phaser article loosely says Rapier WASM is ~1.5MB (variant unclear).",
+              "evidence": "JoltPhysics.js README; Rapier size only from a secondary search snippet.",
+              "source_url": "https://github.com/jrouwe/JoltPhysics.js/",
+              "source_date": "2026 (live repo)",
+              "confidence": "medium"
+            },
+            {
+              "topic": "rendering performance guidance",
+              "claim": "Practical budgets: <100 draw calls on mobile, desktop several hundred to low thousands; InstancedMesh for repeats; BatchedMesh (r156+) merges same-material geometries (per-instance opacity since r183); KTX2/Basis cuts GPU memory 4-8x (a 4096x4096 RGBA texture is 64 MiB, ~85 MiB mipped); Meshopt decodes faster than Draco and is default in gltf-transform optimize; start with 3 or fewer dynamic lights; point-light shadows render 6 faces each; cap devicePixelRatio at 2; half-res post-processing can ~double FPS when fill-bound.",
+              "evidence": "Utsubo '100 tips' page (vendor blog guidance, not my benchmarks, not specific to a city scene).",
+              "source_url": "https://www.utsubo.com/blog/threejs-best-practices-100-tips",
+              "source_date": "2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "post-processing",
+              "claim": "Bloom and SSR are available as TSL nodes (three/addons/tsl/display/) under WebGPURenderer's RenderPipeline (renamed from PostProcessing in r183); SSR needs special setup (RGBA8 normals, packed metalness/roughness). pmndrs/postprocessing merges effects into fewer passes on the WebGLRenderer path. I found no measured cost benchmark for SSR or bloom, only qualitative ratings (bloom low-to-medium).",
+              "evidence": "three.js manual (via search summary; page itself not fully read) and third-party guides.",
+              "source_url": "https://threejs.org/manual/en/webgpu-postprocessing.html",
+              "source_date": "2026",
+              "confidence": "low"
+            },
+            {
+              "topic": "navmesh AI",
+              "claim": "recast-navigation-js (WASM port of Recast/Detour) has a three.js integration package, tiled navmeshes for larger scenes, and a Crowd API; a three.js maintainer recommended it over three-pathfinding for many enemies/larger scenes (Sept 2025).",
+              "evidence": "GitHub README excerpt and forum reply by donmccurdy.",
+              "source_url": "https://github.com/isaac-mason/recast-navigation-js",
+              "source_date": "2025-09-26",
+              "confidence": "high"
+            },
+            {
+              "topic": "bundle size and load time",
+              "claim": "I could not find a current measured bundle size or load time for a small Three.js game. Old figures: minimal tree-shaken Scene+WebGLRenderer ~379 KB minified (older version), official build ~410 KB; rapier compat embeds base64 WASM. Real load time will be dominated by creator-supplied GLB/textures; the agent must measure its own Vite build.",
+              "evidence": "Old forum posts via search snippets; no 2026 measurement found.",
+              "source_url": "https://discourse.threejs.org/t/three-js-file-size-when-importing-via-npm-and-bundling-with-webpack/8904",
+              "source_date": "older (pre-2026)",
+              "confidence": "low"
+            },
+            {
+              "topic": "agent workflow / testing",
+              "claim": "Headless Chromium without a GPU falls back to SwiftShader software rendering (one vendor measured ~24s per 3D page vs ~6s with Mesa llvmpipe on Linux); Linux GPU in headless needs flags like --use-angle=vulkan or xvfb headed mode; WebKit GPU acceleration doesn't work in Playwright headless (needs --headed). Playwright new headless mode via channel 'chromium'. For a Mac, headed Chromium is likely the realistic route; exact Mac headless GPU behavior not verified.",
+              "evidence": "Microlink, Promaton and Dave Snider blog posts; Playwright browsers docs (silent on GPU).",
+              "source_url": "https://microlink.io/blog/webgl-without-a-gpu",
+              "source_date": "2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "AI-agent-built Three.js games",
+              "claim": "Evidence is mostly self-reported: Simon Willison (Oct 28 2026) describes games built in three.js/JS with Opus 5.5 (RTS ported to three.js; a farming sim that took ~2 days and millions of tokens), says testing was manual playtesting; the 2025 Vibe Coding Game Jam (1,000+ entries) was won by a GTA-style taxi game praised for car physics; Roadarium (119-city driving sim, Oct 2026) was written by AI agents but users report blank 3D on some Android phones. None is a first-person on-foot plus driving city game with traffic AI.",
+              "evidence": "Willison post summary, levels.io winners page, Roadarium forum thread.",
+              "source_url": "https://simonwillison.net/2026/Oct/28/vibe-game-development/",
+              "source_date": "2026-10-28",
+              "confidence": "medium"
+            },
+            {
+              "topic": "AI-oriented tooling",
+              "claim": "ThreeDog.js (MIT, announced Nov 7 2026) wraps Three.js for AI agents with CLI/MCP to inspect state, advance time, take screenshots and diagnose errors; the author says it is early development. Unproven, single-author claim.",
+              "evidence": "Author's own forum announcement, 135 views.",
+              "source_url": "https://discourse.threejs.org/t/threedog-js-an-open-source-three-js-game-engine-built-for-ai-coding-agents/96718",
+              "source_date": "2026-11-07",
+              "confidence": "low"
+            },
+            {
+              "topic": "agent pitfalls",
+              "claim": "AI assistants trained on older code can emit deprecated three.js APIs (Clock, PostProcessing); pin the three version and supply three.js llms.txt docs.",
+              "evidence": "Utsubo blog caution and llms.txt note.",
+              "source_url": "https://www.utsubo.com/blog/threejs-2026-what-changed",
+              "source_date": "2026-11-06",
+              "confidence": "medium"
+            }
+          ],
+          "performance_notes": "No measured frame-rate data in my sources for a city-scale first-person Three.js game. Guidance only: budget draw calls (hundreds to low thousands desktop), use InstancedMesh/BatchedMesh for buildings/props/traffic, merge static geometry, limit dynamic lights to about 3 and fake neon with emissive materials plus bloom and baked/light-probe lighting (r184 added a LightProbeGrid addon; r185 added clustered Forward+ lighting), cap devicePixelRatio at 2, run post-processing at reduced resolution. WebGPU is not automatically faster (documented slower cases with many non-instanced meshes); WebGL2 is the safer baseline. True SSR cost is unmeasured in my sources. Mobile is risky: Roadarium author reports some Android devices fail to render and RAM issues despite effort. Physics WASM runs on the main thread unless moved to a worker.",
+          "load_time_and_size_notes": "Library itself: old figures of roughly 0.4 MB minified for the official build and several hundred KB for tree-shaken minimal setups (not measured on r187). Rapier compat embeds base64 WASM (~1.5 MB per one loose secondary mention, unverified). Real payload will be creator-supplied GLB/FBX/textures: use gltf-transform with Meshopt (or Draco) plus KTX2 (UASTC for normal/ORM, ETC1S for base color); KTX2 mainly cuts GPU memory 4-8x, not necessarily download size. Static hosting suffices. Streaming district chunks and a loading screen are the agent's job. No measured load time for a comparable game found, and no Unity comparison was in scope.",
+          "agent_workflow_notes": "Strong fit: everything is text (TS/JS, JSON level data, GLB assets), so Claude Code can write, diff and review it; Vite dev server plus Playwright/headless Chromium allows screenshots, console-error capture and scripted input. Recommended hooks: expose a window.__game test API (seeded RNG, fixed timestep, set time/teleport, spawn incident, dump state/score as JSON) and a deterministic simulation core testable with Vitest without a GPU (scoring, economy, saves). Visual checks need a real GPU path on the Mac (headed Chromium); headless default uses SwiftShader and is slow. Playwright WebKit needs headed for GPU, so Safari checks are weaker. Pointer lock and audio autoplay need a user gesture, so tests must simulate a click. Blender 5.3 can be driven headlessly for GLB cleanup/export, and gltf-transform CLI for Meshopt/KTX2. Gaps: no scene editor (levels as data/code or generated from Blender), no built-in animation state machine, UI, save, or AI; the agent builds these or adopts small libraries (recast-navigation-js, a physics lib, Howler or three PositionalAudio; audio was not researched in depth). Agents cannot judge driving feel or fun, so the creator must playtest; Willison reports manual playtesting was needed. Pin three version and feed llms.txt docs. I found no documented example of a large first-person open-city game built mostly by agents on Three.js.",
+          "strengths_for_this_game": [
+            "Runs natively in the browser with static hosting; WebGL2 works in all major browsers, WebGPU optional with automatic fallback.",
+            "Pure code and text assets match how Claude Code works: the agent can write, run, screenshot and iterate without a GUI editor.",
+            "Largest ecosystem and documentation (600+ official examples, llms.txt docs) and heavy AI-agent familiarity; official Rapier vehicle-controller example is a starting point for arcade driving.",
+            "Full code control over the viewfinder mechanic (second camera/render target, DOM/CSS HUD, depth-based scoring, framing tests).",
+            "Mature asset pipeline for creator-supplied GLB models (gltf-transform, Meshopt, KTX2), and Blender can be automated headlessly.",
+            "recast-navigation-js provides navmesh and crowd pathfinding for pedestrians/police AI.",
+            "A smaller initial download than a Unity WebGL build is plausible but I did not measure it."
+          ],
+          "risks_for_this_game": [
+            "It is a library, not an engine: no editor, level tooling, animation state machine, save system, UI framework or AI; all must be built, increasing scope and bug surface.",
+            "No documented precedent found for a large first-person on-foot plus driving city game with traffic/pedestrian/police AI on Three.js built by agents; success evidence is for smaller, stylized games.",
+            "Rapier JS repo archived July 12 2026 (merged into main Rapier repo); dependency status must be verified. Jolt JS has manual memory management and unclear size.",
+            "WebGPURenderer has had performance regressions in some scenes and breaking changes every release; the WebGL path is safer. Pin versions.",
+            "Neon/rain look (bloom, SSR, many emissive lights) is fill-rate heavy; dynamic lights and shadows are strictly limited; city scale needs instancing, LOD, culling and streaming the agent must engineer; no measured numbers.",
+            "Phones/tablets: real reports of blank rendering and RAM problems on Android in a driving city game; plan desktop-first.",
+            "Agent cannot judge game feel; headless GPU testing is limited (SwiftShader slow, WebKit needs headed), so creator playtesting is required.",
+            "Mixed-quality creator-supplied models (FBX, high poly, huge textures) can blow load time and memory unless compressed and budgeted.",
+            "API churn plus agents trained on older three.js can generate deprecated code."
+          ],
+          "open_questions": [
+            "Actual compressed download size and cold-load time for a Three.js city-scale game with a physics WASM (no measurement found).",
+            "Current npm package name/version for Rapier after the repo merge and whether DynamicRayCastVehicleController is maintained.",
+            "Whether WebGPURenderer is faster than WebGLRenderer on an M4 Mac for an instanced city scene with post-processing (no benchmark found).",
+            "SSR/bloom/volumetric cost numbers on integrated and mid-range GPUs.",
+            "Jolt vs Rapier vs Havok for arcade car handling and WASM size; Havok was not researched.",
+            "Positional audio and scanner-radio approach was not researched in depth.",
+            "Any verified AI-built first-person open-world three.js game with traffic AI at scale.",
+            "Whether Jolt multithread builds require cross-origin isolation headers on static hosts."
+          ]
+        },
+        "verification": {
+          "option": "Three.js (plain JS/TS + Vite), optionally react-three-fiber",
+          "verdicts": [
+            {
+              "claim": "Latest three.js is r187 (three@0.187.0) published 2026-10-30; r186 on 2026-09-08; 2026 cadence r183 Feb, r184 Apr 16, r185 Jun 25.",
+              "verdict": "confirmed",
+              "correction": "npm registry (queried live 2026-11-17): 0.187.0 at 2026-10-30T08:09Z, 0.186.0 at 2026-09-08, 0.185.0 at 2026-06-25, 0.184.0 at 2026-04-16. Patch releases also exist (0.183.2 Feb 28, 0.185.1 Jul 1, 0.186.1 Sep 24). 0.187.0 is npm 'latest'.",
+              "source_url": "https://www.npmjs.com/package/three"
+            },
+            {
+              "claim": "r186 removed PCFSoftShadowMap; r183 replaced Clock with Timer; r187 removed CubeUVReflectionMapping; r186 removed minified builds.",
+              "verdict": "partly_correct",
+              "correction": "Checked in the r187 package source: PCFSoftShadowMap is still exported but marked '@deprecated since r186. Use PCFShadowMap' (deprecated, not removed). Clock is still exported, marked deprecated since r183, with Timer in core/Timer.js. CubeUVReflectionMapping is no longer in constants.js (removal consistent). build/ contains no *.min.js files (minified-build removal consistent). So the churn is real, but some items are deprecations with warnings, not hard breaks.",
+              "source_url": "https://www.npmjs.com/package/three/v/0.187.0"
+            },
+            {
+              "claim": "three.js ships llms.txt docs for AI tools.",
+              "verdict": "confirmed",
+              "correction": "https://threejs.org/llms.txt returns 200 and points to /docs/llms.txt and /docs/llms-full.txt (includes TSL). Which release first added it (claimed r183) was not verified.",
+              "source_url": "https://threejs.org/llms.txt"
+            },
+            {
+              "claim": "WebGPU ships by default in Chrome/Edge (113 Win/macOS/ChromeOS; Linux 144 Intel, 147 NVIDIA Wayland), Chrome Android 12+ (121), Safari 26, Firefox 141 Windows and Apple Silicon macOS (145; all macOS 147); Firefox Linux/Android behind flag.",
+              "verdict": "partly_correct",
+              "correction": "gpuweb wiki fetched 2026-11-17 agrees, with nuances the report dropped: Firefox 145 on Apple Silicon only on macOS 26+, 147 on all macOS versions on Apple Silicon; Firefox on Intel Macs is Nightly only; Chrome on Windows ARM64 is still behind a flag; Chrome Android excludes Samsung Xclipse and some other GPUs; Firefox Linux is Nightly only with shipping 'expected in 2026'.",
+              "source_url": "https://github.com/gpuweb/gpuweb/wiki/Implementation-Status"
+            },
+            {
+              "claim": "WebGPURenderer falls back to WebGL2 automatically, with breaking changes most releases.",
+              "verdict": "unverifiable",
+              "correction": "Not re-opened (Firecrawl was out of credits). The r187 package does ship separate builds: three.webgpu.js (1.35 MB raw, about 265 KB gzip) and three.webgpu.nodes.js, so the WebGPU path is a separate and larger entry point than three.module.js. The fallback behaviour is widely documented but I did not re-read it this session.",
+              "source_url": "https://threejs.org/docs/pages/WebGPURenderer.html"
+            },
+            {
+              "claim": "Forum reports show WebGPURenderer slower than WebGLRenderer, for example 20k non-instanced cubes at 60 vs 15 FPS (M1 Pro, r173, Feb 2025).",
+              "verdict": "unverifiable",
+              "correction": "Not re-opened. Even if accurate, it is a 21-month-old r173 data point, and the report concedes there is no current status. It should not be weighted heavily.",
+              "source_url": "https://discourse.threejs.org/t/why-webgpurenderer-performance-significantly-lower-than-webglrenderer/77629"
+            },
+            {
+              "claim": "The Rapier JS repo was archived on July 12 2026 and merged into dimforge/rapier under 'typescript'; package status needs verification.",
+              "verdict": "confirmed",
+              "correction": "Archive banner and README confirmed. The open question in the report can now be closed: @dimforge/rapier3d and @dimforge/rapier3d-compat 0.21.0 were published 2026-09-25 from the merged repo (repository.url = dimforge/rapier). Publishing continued after the archive, so this is a repo move, not abandonment. The report presented it as a bigger risk than it is.",
+              "source_url": "https://github.com/dimforge/rapier.js"
+            },
+            {
+              "claim": "Rapier JS has DynamicRayCastVehicleController, and there is an official three.js rapier vehicle example.",
+              "verdict": "partly_correct",
+              "correction": "Confirmed that rapier3d-compat 0.21.0 still contains dist/control/ray_cast_vehicle_controller.d.ts and the class in its JS. I did not re-open the three.js example page.",
+              "source_url": "https://www.npmjs.com/package/@dimforge/rapier3d-compat"
+            },
+            {
+              "claim": "Rapier WASM is about 1.5 MB (loose secondary mention).",
+              "verdict": "refuted",
+              "correction": "Measured from the 0.21.0 tarball: rapier_wasm3d_bg.wasm is 3.08 MB raw, about 1.17 MB gzip-9. The compat build inlines the WASM as base64: rapier.mjs is 4.34 MB raw, about 1.65 MB gzip. Use the non-compat package (separate .wasm, streamable) to save about 0.5 MB gzipped.",
+              "source_url": "https://www.npmjs.com/package/@dimforge/rapier3d"
+            },
+            {
+              "claim": "Library bundle size: old figures of about 0.4 MB minified for the official build; no current measurement.",
+              "verdict": "refuted",
+              "correction": "r187 measured locally (raw / gzip-9 / brotli): three.module.js 659 KB / 129 KB / 103 KB, which imports three.core.js 1.47 MB / 290 KB / 211 KB, so about 420 KB gzip for the full WebGL entry before tree-shaking. three.webgpu.js is 1.35 MB / 265 KB / 193 KB plus core. The builds are unminified since r186, so Vite minification will shrink them further. A real Vite build measurement is still needed.",
+              "source_url": "https://www.npmjs.com/package/three/v/0.187.0"
+            },
+            {
+              "claim": "recast-navigation-js has a three.js integration, tiled navmeshes and a Crowd API, and is recommended by a maintainer.",
+              "verdict": "partly_correct",
+              "correction": "@recast-navigation/three 0.44.0 was published 2026-10-30, so the package is actively maintained. I did not re-open the forum recommendation.",
+              "source_url": "https://www.npmjs.com/package/@recast-navigation/three"
+            },
+            {
+              "claim": "Simon Willison (Oct 28 2026) built games in three.js with Opus 5.5, including a farming sim that took about 2 days and millions of tokens; testing was manual playtesting.",
+              "verdict": "partly_correct",
+              "correction": "Post date confirmed. The post does NOT say what engine the farming game (Pumpkin Farmer) uses. Three.js is stated for Tree Appreciator, Emberwick (from a three.js prototype), and Battle Drones (ported to three.js by Opus 5.5). Testing was not only manual: Battle Drones also used AI-vs-AI matches that produce replays. All four games are small or stylized, and the author spent under 4 hours of his own time on each.",
+              "source_url": "https://simonwillison.net/2026/Oct/28/vibe-game-development/"
+            },
+            {
+              "claim": "ThreeDog.js (Nov 7 2026) is an AI-agent-oriented wrapper; Roadarium and On-Call Drive are examples; the Vibe Jam winner was a taxi game; 12.2M weekly downloads.",
+              "verdict": "unverifiable",
+              "correction": "Not re-checked (web scraping credits exhausted). The report already rated these low confidence. The download figure comes from a vendor blog.",
+              "source_url": "https://discourse.threejs.org/t/threedog-js-an-open-source-three-js-game-engine-built-for-ai-coding-agents/96718"
+            },
+            {
+              "claim": "Headless Chromium without a GPU uses SwiftShader (about 24 s per page in one vendor test); WebKit GPU needs headed mode.",
+              "verdict": "unverifiable",
+              "correction": "Not re-opened. The general claim is plausible. On an M4 Mac, headed Chromium driven by Playwright is the realistic GPU path, which the report already says.",
+              "source_url": "https://microlink.io/blog/webgl-without-a-gpu"
+            },
+            {
+              "claim": "Utsubo performance-budget and post-processing guidance (draw-call budgets, KTX2 4-8x GPU memory, Meshopt default).",
+              "verdict": "unverifiable",
+              "correction": "This is vendor guidance, not benchmarks. It was not re-read. The KTX2 memory arithmetic (4096x4096 RGBA = 64 MiB) is correct. The r187 package does ship basis_transcoder.wasm (527 KB raw), meshopt_decoder and the draco decoder wasm, which supports the claim that the pipeline exists.",
+              "source_url": "https://www.utsubo.com/blog/threejs-best-practices-100-tips"
+            }
+          ],
+          "important_facts_missed": [
+            "Rapier is still published on npm: @dimforge/rapier3d(-compat) 0.21.0 was released 2026-09-25 from the merged repo and still includes DynamicRayCastVehicleController. This answers the report's open question.",
+            "Measured r187 payload: about 420 KB gzip for three.module.js plus three.core.js unminified, before tree-shaking. Rapier adds about 1.17 MB gzip (separate .wasm) or about 1.65 MB gzip (compat, base64-inlined). Library code plus physics is therefore roughly 1.5-2 MB gzip before any game assets. Creator-supplied GLB and textures will dominate.",
+            "three.js r187 ships its own Basis/KTX2 transcoder (527 KB wasm), Meshopt decoder and Draco decoders, so the compression pipeline needs no extra dependencies, though each decoder adds download.",
+            "Several 'removed' APIs are actually deprecated with warnings (PCFSoftShadowMap since r186, Clock since r183). The upgrade cost is lower than 'breaking every release' suggests, but deprecated code will still eventually break.",
+            "WebGPU gaps that matter for desktop-first: Firefox on Intel Macs and Firefox on Linux are Nightly only, and Chrome on Windows ARM64 is behind a flag. A WebGL2 baseline is mandatory, not optional.",
+            "The report does not compare against Babylon.js, which is a fuller engine with built-in physics (Havok), audio, GUI, an inspector and animation groups. For a no-GUI agent workflow, it removes several of the 'build it yourself' gaps the report lists for Three.js. The Unity comparison the user asked for is also out of scope here; note that Unity is not installed and needs a GUI editor.",
+            "The game is first-person, so character animation needs are limited (no player body), which reduces the cost of the missing animation state machine. NPC pedestrians and police still need AnimationMixer blending, written by hand.",
+            "Willison's strongest testing pattern was automated AI-vs-AI simulation with replays. That supports the report's deterministic-sim and test-API recommendation more concretely than 'manual playtesting only'."
+          ],
+          "bias_check": "The report is broadly honest and somewhat undersells Three.js on dependency risk and size. The Rapier archive is framed as a maintenance red flag, but packages continued shipping from the merged repo two months later. The size section cites stale or loose figures (a 1.5 MB WASM claim that is wrong in both directions depending on the variant) when exact numbers are available from npm. It slightly oversells the evidence from Willison's post by attributing the farming game to three.js and calling testing purely manual. It overstates API churn by calling deprecations 'removals'. On the central question, how much an agent can do without a GUI, it is fair: everything is text and testable through Playwright and Vitest, but game feel needs a human, and no precedent exists at this game's scale. Several low-confidence secondary items (ThreeDog, Roadarium, the 12.2M downloads figure, the WebGPU perf thread) could not be re-verified in this session.",
+          "corrected_bottom_line": "Three.js r187 (2026-10-30) is current, actively released about every 7-10 weeks, and fully text-driven. That makes it one of the best fits for a terminal-only AI agent, and it ships llms.txt docs plus its own KTX2, Meshopt and Draco decoders. The library plus Rapier physics costs roughly 1.5-2 MB gzipped before assets (Rapier wasm about 1.17 MB gzip, three core plus module about 420 KB gzip unminified). The physics dependency is alive: rapier3d 0.21.0 was published Sep 2026 from the merged repo and still has the ray-cast vehicle controller. Use WebGL2 as the baseline, because WebGPU is still missing on Firefox Linux and Intel Macs and on Chrome Windows ARM. The real cost is that this is a library, not an engine: the agent must build level data, NPC animation blending, UI, saves, traffic AI and streaming. There is no verified precedent for an agent-built first-person on-foot plus driving city game, so the creator's playtesting and a deterministic test API are essential, and Babylon.js should be weighed as the closest alternative with more built-in systems."
+        }
+      },
+      {
+        "key": "babylonjs",
+        "research": {
+          "option": "Babylon.js",
+          "current_version_and_date": "Babylon.js 9.0 released 2026-03-26 (official blog + forum). npm registry \"latest\" for @babylonjs/core was 9.37.0 when fetched on 2026-11-17 (9.x ships frequent minor releases). A sibling engine \"Babylon Lite\" (WebGPU-only, no WebGL fallback, API not backward-compatible) was announced 2026-06-17.",
+          "summary": "Babylon.js is a mature, Microsoft-backed, Apache-2.0 \"batteries included\" engine (v9.0 March 2026, now 9.37) with a unified WebGL2/WebGPU engine, Havok physics (MIT-licensed closed-source wasm), a physics character controller, recast navmesh and crowds, GUI, Audio Engine v2, glTF with Draco/meshopt/KTX2, an Inspector, node editors, a post-process pipeline and clustered lighting. For this game that removes much glue work compared with bare Three.js. Weak spots matter for a driving game. There is no built-in vehicle: the forum shows the team had no Havok vehicle controller as of Jan 2026 (a 2023 promise slipped), and the only vehicle system found is a beta third-party add-on (Babylon Toolkit, Mar 2026) built on Havok rigid bodies plus shapecasts, so vehicle handling would be custom code. Bundle size is the engine's known unflattering point: the full core import is about 1.8 MB min+gzip, real tree-shaken apps in forum reports are about 0.56 MB gzipped (2.3 MB raw) or about 1 MB gzipped, plus Havok's roughly 2 MB wasm. Babylon's own team now ships a WebGPU-only \"Lite\" engine at 34 KB vs 675 KB gzipped for the same scene, an implicit admission that the main engine is heavy. Load size is still modest next to Unity WebGL, but it is bigger than Three.js. Agent workflow: no official Babylon MCP or llms.txt was found (community MCP servers exist), and I found no documented substantial first-person or driving game built with AI agents on Babylon. AI coding is discussed on the forum with mixed results, and most evidence I found is anecdotal. Headless Playwright testing is feasible on macOS. This is an honest \"good fit, with caveats\" rather than a clear win over Three.js for an AI-driven build. Research was done with WebFetch/WebSearch after Firecrawl credits ran out mid-run, so some items (LOD, occlusion queries, SSR/bloom specifics, TypeScript typings quality, exact Havok wasm size, Safari WebGPU status) were not verified.",
+          "claims": [
+            {
+              "topic": "version and release",
+              "claim": "Babylon.js 9.0 was released on 2026-03-26 and is described by the team as its most ambitious release; features include Clustered Lighting (WebGPU and WebGL2), volumetric lighting using WebGPU compute, Node Particle Editor, Frame Graph, animation retargeting, advanced Gaussian splats, and an all-new inspector.",
+              "evidence": "Windows Developer Blog announcement dated Mar 26 2026; forum announcement post dated Mar 26 2026.",
+              "source_url": "https://blogs.windows.com/windowsdeveloper/2026/03/26/announcing-babylon-js-9-0/",
+              "source_date": "2026-03-26",
+              "confidence": "high"
+            },
+            {
+              "topic": "current version",
+              "claim": "The npm 'latest' tag for @babylonjs/core was 9.37.0, with an unpacked package size of about 73.9 MB (source package, not what ships to users).",
+              "evidence": "registry.npmjs.org/@babylonjs/core/latest fetched 2026-11-17 returned version 9.37.0 and unpackedSize 73932122 bytes.",
+              "source_url": "https://registry.npmjs.org/@babylonjs/core/latest",
+              "source_date": "2026-11-17",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPU maturity and fallback",
+              "claim": "WebGPU support began in v5.0 (May 2022); v8.0 (Mar 2025) added native WGSL shaders, removing a conversion layer over 3 MB; EngineFactory.CreateAsync() picks WebGPU when available and falls back to WebGL. WebGPU snapshot rendering exists but forum threads report bugs (animations not playing, particle crash in fast mode, highlight breakage).",
+              "evidence": "Utsubo comparison article (updated 2026-09-24) for version history and fallback; Babylon forum threads on snapshot rendering bugs returned by search (not individually opened).",
+              "source_url": "https://www.utsubo.com/blog/threejs-vs-babylonjs-vs-playcanvas-comparison",
+              "source_date": "2026-09-24",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Havok licence",
+              "claim": "Havok is free to use in Babylon under the MIT licence via the @babylonjs/havok package, but Havok itself is closed source and only the wasm usage is MIT; Babylon could not share the source or heap tuning.",
+              "evidence": "Babylon docs say 'free to use under the MIT license'; a team member said Havok 'remains a Microsoft asset and its code source is not oss' and another said 'Havok is closed source. .wasm usage is MIT' (Apr-May 2023). Default emscripten heap about 16 MiB with memory growth enabled.",
+              "source_url": "https://forum.babylonjs.com/t/havok-physics-raycast-vehicle-support/40180",
+              "source_date": "2023-05-02",
+              "confidence": "high"
+            },
+            {
+              "topic": "Havok wasm size",
+              "claim": "No official wasm size was found. A downstream project's build log shows a roughly 2 MB HavokPhysics.wasm plus a 36 KB JS chunk; treat as an approximate third-party figure.",
+              "evidence": "Search result describing a Facebook immersive-web-sdk commit that lists the wasm at about 2 MB; Babylon docs do not state the size.",
+              "source_url": "https://github.blesdmm.dns-dynamic.net/facebook/immersive-web-sdk/commit/44a46ff70c1bcc88fdcabfdda566113ea01f2d9b",
+              "source_date": "unknown",
+              "confidence": "low"
+            },
+            {
+              "topic": "vehicle support",
+              "claim": "Babylon core has no Havok vehicle/raycast-vehicle controller. In Jun 2023 the team said they wanted one by 7.0; on 2026-01-19 a team member said there was no update and none expected short-term. A beta third-party Havok vehicle system (Babylon Toolkit, racing demos) appeared 2026-03-02, built on a rigid body plus four spherical shapecasts for wheels, with known suspension and stability issues.",
+              "evidence": "Forum thread 'Havok vehicle controller' (Jun 2023 to Mar 2026 posts) and the Babylon Toolkit thread (Mar 2-9 2026), which is listed under 'Demos and projects' and links to a separate site; licence not stated.",
+              "source_url": "https://forum.babylonjs.com/t/havok-vehicle-controller/41961",
+              "source_date": "2026-03-02",
+              "confidence": "high"
+            },
+            {
+              "topic": "character controller",
+              "claim": "A Havok-based physics character controller is documented (capsule shape, moveWithCollisions, animated-body platform interaction, collision observable, state-based main loop such as ON_GROUND/IN_AIR). The docs page did not state the introducing version.",
+              "evidence": "Babylon docs 'Physics character controller' page, read via a summarising fetch.",
+              "source_url": "https://doc.babylonjs.com/features/featuresDeepDive/physics/characterController",
+              "source_date": "unknown",
+              "confidence": "medium"
+            },
+            {
+              "topic": "bundle size",
+              "claim": "Full @babylonjs/core import is about 1.8 MB min+gzip per one 2026 comparison. Forum users with ES6 tree-shaking reported 2.2-2.3 MB raw (about 0.56-1.06 MB gzipped) even for small apps in 2023; MeshBuilder imports pull in all builders unless importing individual builders. The team's own Lite engine ships a BoomBox PBR scene in 34 KB vs 675 KB gzipped for Babylon.js (2.8 MB raw vs 84.5 KB).",
+              "evidence": "Utsubo article (Sep 2026); Babylon forum thread 'Treeshaking but bundle still over 5MB' (Sep 2023, with a Jul 2025 tip); Babylon Lite announcement (Jun 17 2026), figures are the team's own and measured in its own suite.",
+              "source_url": "https://forum.babylonjs.com/t/treeshaking-but-bundle-still-over-5mb/44370",
+              "source_date": "2025-07-17",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Babylon Lite",
+              "claim": "Babylon Lite, announced 2026-06-17, is WebGPU-only (no WebGL fallback), classless/data-oriented, Apache-2.0, and explicitly not backward compatible. It claims about 19x less gzipped JS, 3.6x faster frames, 2.5x faster startup, 5x less memory than Babylon.js, with navmesh and physics said to be 'already in' per the team, but feature parity is still a roadmap goal and the API will change.",
+              "evidence": "Announcement thread (first post by a team member 2026-06-17); the 'in short' FAQ says it is young and breaking changes are allowed; the repo shows 1,005 commits and 175 stars. All performance figures are the vendor's own.",
+              "source_url": "https://forum.babylonjs.com/t/introducing-babylon-lite/63648",
+              "source_date": "2026-06-17",
+              "confidence": "high"
+            },
+            {
+              "topic": "glTF/compression",
+              "claim": "The glTF loader supports Draco (KHR_mesh_draco_compression), Meshopt (EXT_meshopt_compression) and KTX2/Basis (KHR_texture_basisu), but production use needs extra steps to host decoder files locally.",
+              "evidence": "Babylon docs glTF importer page, section 'Loading Codecs Locally'.",
+              "source_url": "https://doc.babylonjs.com/features/featuresDeepDive/importers/glTF/",
+              "source_date": "unknown",
+              "confidence": "high"
+            },
+            {
+              "topic": "navigation and audio",
+              "claim": "The docs cover navmesh generation and crowd agents with obstacles (via NavigationPlugin V2; the page did not name Recast or the package). Audio Engine v2 has per-sound spatial properties, but the legacy audio engine is no longer auto-created, and a Feb 2026 thread reports multiple simultaneous spatial StaticSounds not working.",
+              "evidence": "Babylon crowd navigation docs page; forum thread 'V2 AudioEngine Not Working With multiple spatial StaticSound' surfaced via search, not opened.",
+              "source_url": "https://doc.babylonjs.com/features/featuresDeepDive/crowdNavigation",
+              "source_date": "2026-02",
+              "confidence": "medium"
+            },
+            {
+              "topic": "AI-agent workflow",
+              "claim": "No official Babylon.js MCP server or llms.txt was found; only community MCP servers (documentation search, requiring about 2 GB of cloned repos and a vector DB). The 9.0 release post jokes about an expert 'leveraging 327 simultaneous AI agents' with no detail. A 2026 forum thread has mixed anecdotal reports: Codex found one animation bug quickly but gave weak fixes on another; an AI-generated Three.js marble game was called buggy; one user could not get a 3D app working with an AI builder but did better with general web-app builders plus the Babylon Toolkit. No outdated-API complaints appeared in that thread.",
+              "evidence": "Web search results (lobehub MCP listings, unverified against GitHub); Windows blog 9.0 intro; forum thread 'That's it. I quit!' posts dated Apr 4 - Aug 8 2026.",
+              "source_url": "https://forum.babylonjs.com/t/thats-it-i-quit/63047",
+              "source_date": "2026-08-08",
+              "confidence": "medium"
+            },
+            {
+              "topic": "popularity and training material",
+              "claim": "@babylonjs/core had about 314,621 weekly npm downloads (Sep 15-21 2026), about 1/39 of Three.js; about 26K GitHub stars; about 470 Stack Overflow questions; forum about 10,200 users. Thus less public example material than Three.js, though the forum and Playground are large and official.",
+              "evidence": "Utsubo comparison article, updated 2026-09-24 (third-party). Apache 2.0 licence, Microsoft-backed.",
+              "source_url": "https://www.utsubo.com/blog/threejs-vs-babylonjs-vs-playcanvas-comparison",
+              "source_date": "2026-09-24",
+              "confidence": "medium"
+            },
+            {
+              "topic": "API stability",
+              "claim": "Backward compatibility is a stated principle of Babylon.js: a user upgraded from 7.11.2 to 9.0 across 64 files and 244 imports, with an AI risk assessment of low-medium, and reported everything worked after bumping packages (an anecdote).",
+              "evidence": "Forum 9.0 announcement thread reply dated 2026-04-08.",
+              "source_url": "https://forum.babylonjs.com/t/welcome-to-babylon-js-9-0/62940",
+              "source_date": "2026-04-08",
+              "confidence": "medium"
+            }
+          ],
+          "performance_notes": "No independent, current head-to-head frame-rate benchmark of Babylon.js vs Three.js on a large scene was found. The one comparison article says architecture matters more than library choice and that Babylon.js 'benchmarks well in certain WebGPU tasks'. An older (2021) forum thread reports a big-model scene running far slower in Babylon's sandbox than in a Three.js viewer, not current evidence. The only hard numbers found are the vendor's own: Babylon Lite is about 3-4x faster CPU frame time than Babylon.js for identical scenes, which implies the main engine has notable per-frame CPU overhead (the 9.0 thread says core render-loop gains are planned for v10). Clustered Lighting (9.0) is claimed to handle hundreds to thousands of lights on WebGPU and WebGL2, which fits a neon city, but the demo wasn't tested. WebGPU snapshot rendering helps static scenes but has reported bugs. Occlusion queries, LOD, instancing, SSR, bloom and volumetric particle details were not individually verified in this run.",
+          "load_time_and_size_notes": "Engine JS: about 1.8 MB min+gzip for a full core import; tree-shaken real apps reported about 0.56-1.06 MB gzipped (2.2-2.3 MB raw, forum 2023, with MeshBuilder pitfalls). Add roughly 2 MB for Havok wasm (third-party measurement, unverified) plus glTF/KTX2/Draco decoder wasm if used. Assets (the creator's models and textures) will dominate total download. No measured end-to-end load time for a small Babylon game was found. Compared with Unity WebGL (not researched here), Babylon's engine payload is far smaller, but it is several times larger than a tree-shaken Three.js or Babylon Lite scene.",
+          "agent_workflow_notes": "Strengths: pure TypeScript/npm/Vite project; the whole game can be written, built and run from the terminal with no GUI editor. Playwright can drive Chrome on the Mac; the Babylon Playground is not needed. Headless Chrome does not expose WebGPU by default (needs --enable-unsafe-webgpu); headless WebGPU screenshots work on macOS but not reliably on Windows/Linux; WebGL2 mode is the safer path for automated screenshots and canvas pixel checks. Babylon's own CI uses Chrome SwiftShader for pixel-diff tests, which shows software-rendered testing is viable. The built-in Inspector and node editors are GUI tools for the human but are not needed by an agent. Weaknesses: no official MCP/llms.txt found; v8/v9 changes (Audio Engine v2, Physics v2, Havok plugin, frequent minor releases to 9.37) mean agent training data may mix legacy and current APIs, so pin versions and check against the docs and unpkg .d.ts files. Community Babylon MCP servers exist but were not verified. Vehicle physics, camera viewfinder (render-target plus post-process) and AI traffic would be custom code; Babylon provides the pieces (Havok shapecasts, render target textures, navmesh crowds) but not a driving game kit. No documented substantial AI-built first-person or driving Babylon game was found; GitHub's babylonjs-game topic (34 repos) has mostly small or old projects, plus a Havok character controller sample (69 stars, updated Jan 2026) and a small TypeScript/Vite WebGPU space shooter (updated Oct 2026).",
+          "strengths_for_this_game": [
+            "Most complete built-in toolbox of the web engines: Havok physics, character controller, navmesh and crowd agents, GUI, audio engine, asset loading, Inspector and node editors, so fewer third-party libraries for an agent to wire together.",
+            "Clustered Lighting (9.0, WebGPU and WebGL2) targets many dynamic lights, which suits neon-heavy night streets; volumetric lighting and a post-process pipeline are available for rain and fog looks.",
+            "Strong backward-compatibility culture and Microsoft backing lower the risk that a long-running agent-built codebase breaks on upgrade.",
+            "WebGL2 plus WebGPU in one engine gives a safe fallback for Chrome, Safari, Firefox and Edge, and glTF with Draco/Meshopt/KTX2 handles the creator's supplied GLB models.",
+            "TypeScript-first, runs from terminal with Vite and Playwright, so Claude Code can build and test end to end without a GUI editor.",
+            "Havok is free under MIT and is a proven rigid-body engine, which helps crashes and physical scenes."
+          ],
+          "risks_for_this_game": [
+            "No built-in vehicle controller: the team missed its 2023 target and said in Jan 2026 there was no short-term plan; driving feel (the core of the pursuit scenes) must be custom-built on Havok or hand-rolled, and the only existing system is a beta third-party add-on of unclear licence.",
+            "Havok is closed-source wasm (about 2 MB, unverified): limited debuggability, docs focus on the plugin rather than Havok itself, and the character controller is documented but vehicle-plus-character interplay (entering a car) is DIY.",
+            "Largest engine payload among the web options: about 1.8 MB gzipped full import, with forum evidence that tree-shaking is hard to get right; Babylon's own Lite engine shows 19x smaller output is possible, which signals the main engine's cost.",
+            "Frame CPU overhead: the vendor's own numbers imply the main engine uses several times more CPU per frame than a lean WebGPU renderer, a concern for dense city plus traffic plus pedestrian AI on a phone.",
+            "Smaller public corpus than Three.js (roughly 1/39 of the npm downloads, about 470 Stack Overflow questions), and APIs changed substantially across v6-v9 (Physics v2, Audio v2), so agents can produce outdated code; no official MCP or llms.txt found.",
+            "Audio Engine v2 had a reported multi-spatial-sound bug in Feb 2026; snapshot rendering has reported bugs; both matter for a rainy, loud city.",
+            "Babylon Lite (WebGPU-only, unstable API) is a possible future direction but is too young and incomplete to choose now, and could create confusion for agents mixing the two APIs."
+          ],
+          "open_questions": [
+            "Firecrawl credits ran out mid-run, so I used WebFetch/WebSearch for the rest; several pages were read through summarising fetches rather than raw text.",
+            "Exact Havok wasm size and its load/instantiate time on a MacBook are unknown; the approximate 2 MB figure is third-party.",
+            "Is Safari's WebGPU stable enough (and which versions) for Babylon's WebGPU path, or is WebGL2 the practical Safari path? Not verified.",
+            "Not verified: LOD, occlusion queries, SSR, bloom, instancing details, GUI quality and TypeScript typing/docs quality in v9; and whether Babylon's inspector (v2) is useful to an agent.",
+            "No measured Babylon-vs-Three.js frame-rate benchmark for a city-scale scene with 300+ draw calls and dynamic lights was found; a quick spike on the real target machine would answer it.",
+            "Whether the Babylon Toolkit vehicle system is licensed for use and how good its handling is for chases is unclear.",
+            "Whether any substantial AI-built first-person or driving game exists on Babylon (none found); the claim in the 9.0 blog about 327 simultaneous AI agents is unexplained."
+          ]
+        },
+        "verification": {
+          "option": "Babylon.js",
+          "verdicts": [
+            {
+              "claim": "Babylon.js 9.0 released 2026-03-26; headline features include Clustered Lighting, Volumetric Lighting, Node Particle Editor, Frame Graph v1, Animation Retargeting, Gaussian splats.",
+              "verdict": "confirmed",
+              "correction": "The npm time for @babylonjs/core 9.0.0 is 2026-03-26T09:46Z. The Windows blog (opened 2026-11-17) also lists Textured Area Lights and Particle Flow Maps. It mentions no vehicles, MCP or bundle size.",
+              "source_url": "https://blogs.windows.com/windowsdeveloper/2026/03/26/announcing-babylon-js-9-0/"
+            },
+            {
+              "claim": "npm latest @babylonjs/core is 9.37.0, unpacked about 73.9 MB.",
+              "verdict": "confirmed",
+              "correction": "Registry queried 2026-11-17: 9.37.0, published 2026-11-16, Apache-2.0, unpackedSize 73,932,122. @babylonjs/loaders is also 9.37.0. A 9.36.1 preview tag exists.",
+              "source_url": "https://registry.npmjs.org/@babylonjs/core"
+            },
+            {
+              "claim": "No official Babylon MCP server or llms.txt exists; only community MCP servers.",
+              "verdict": "refuted",
+              "correction": "Both exist officially. https://doc.babylonjs.com/llms.txt (about 64 KB) indexes the docs, and every doc page is served as markdown when you append .md. https://www.babylonjs.com/llms.txt has a 'Key facts for AI assistants' section (prefer @babylonjs/* ES modules, Havok plugin, Babylon Lite is separate). There is also an official npm package @babylonjs/mcp-servers (first published 2026-06-04, now 9.37.0) with MCP servers for the Node Material, Node Geometry, Node Render Graph, Node Particle, GUI, Flow Graph and Smart Filters editors. Caveat: these servers drive the visual editors' graphs; they are not a scene, docs or code-search server. The community MCP servers (thaneplummer, immersiveidea) exist only as lobehub listings with no dates.",
+              "source_url": "https://doc.babylonjs.com/toolsAndResources/mcpServers"
+            },
+            {
+              "claim": "No official Havok vehicle controller; the team targeted 7.0 in Jun 2023; on 2026-01-19 a team member said no update short-term; a third-party beta appeared 2026-03-02.",
+              "verdict": "confirmed",
+              "correction": "Thread re-read: 2023-06-27 'want to have it by 7.0'; 2026-01-19 'No update so far, sorry', with no short-term update expected because of the 9.0 work; 2026-03-02 community beta (a btRaycastVehicle-style polyfill in the Babylon Toolkit). I could not confirm the shapecast details or the licence.",
+              "source_url": "https://forum.babylonjs.com/t/havok-vehicle-controller/41961"
+            },
+            {
+              "claim": "Havok wasm is roughly 2 MB (third-party figure, unverified).",
+              "verdict": "partly_correct",
+              "correction": "Measured directly 2026-11-17: @babylonjs/havok 1.3.14 (MIT) HavokPhysics.wasm is 2,094,563 bytes raw and about 659 KB with gzip -9 (my local measurement; Brotli would be smaller). So 2 MB is the raw size, but the transfer size with standard compression is about 0.65 MB. The npm package unpacks to 4.37 MB.",
+              "source_url": "https://unpkg.com/@babylonjs/havok@1.3.14/lib/esm/HavokPhysics.wasm"
+            },
+            {
+              "claim": "Havok is free under MIT via @babylonjs/havok; the Havok source is closed.",
+              "verdict": "confirmed",
+              "correction": "The npm licence field is MIT (v1.3.14). The closed-source statements come from 2023 forum posts and were not re-opened by me.",
+              "source_url": "https://registry.npmjs.org/@babylonjs/havok/latest"
+            },
+            {
+              "claim": "A Havok physics character controller is documented (capsule, moveWithCollisions, START_JUMP/IN_AIR/ON_GROUND states).",
+              "verdict": "confirmed",
+              "correction": "The docs .md shows PhysicsCharacterController, a capsule option, synchronous moveWithCollisions and the state examples. The introducing version is not stated.",
+              "source_url": "https://doc.babylonjs.com/features/featuresDeepDive/physics/characterController.md"
+            },
+            {
+              "claim": "The glTF loader supports Draco, Meshopt and KTX2/Basis, and decoders need extra steps to host locally.",
+              "verdict": "confirmed",
+              "correction": "Docs also note that 'Meshopt compression does not yet support injection' for local hosting.",
+              "source_url": "https://doc.babylonjs.com/features/featuresDeepDive/importers/glTF.md"
+            },
+            {
+              "claim": "Navmesh and crowd agents are available via NavigationPlugin V2.",
+              "verdict": "confirmed",
+              "correction": "The docs index a 'NavigationPlugin V2' intro page. I did not check the Recast backing or the package.",
+              "source_url": "https://doc.babylonjs.com/features/featuresDeepDive/crowdNavigation.md"
+            },
+            {
+              "claim": "Babylon Lite was announced 2026-06-17: WebGPU-only, Apache-2.0, not backward compatible, BoomBox 34 KB vs 675 KB gzipped, navmesh and physics 'already in'.",
+              "verdict": "confirmed",
+              "correction": "The forum post is dated 2026-06-17 by the project lead. The GitHub repo BabylonJS/Babylon-Lite is Apache-2.0, has 175 stars, was created 2026-04-02 and was pushed 2026-11-18, so it is very actively developed. The official llms.txt says its output is pixel-for-pixel identical to Babylon.js. Lite docs now live under doc.babylonjs.com/lite. All performance figures are the vendor's own.",
+              "source_url": "https://forum.babylonjs.com/t/introducing-babylon-lite/63648"
+            },
+            {
+              "claim": "A full core import is about 1.8 MB min+gzip; tree-shaken apps are about 0.56-1.06 MB gzipped.",
+              "verdict": "unverifiable",
+              "correction": "I did not re-measure. The figures come from a third-party article and 2023 forum anecdotes, so treat them as order-of-magnitude only. Babylon's own 675 KB gzipped BoomBox figure (June 2026) is the most current first-party number for a small PBR scene, and it is lower than 1.8 MB.",
+              "source_url": "https://forum.babylonjs.com/t/treeshaking-but-bundle-still-over-5mb/44370"
+            },
+            {
+              "claim": "WebGL2 plus WebGPU in one engine gives a safe path across Chrome, Safari, Firefox and Edge; Safari WebGPU status was unverified.",
+              "verdict": "partly_correct",
+              "correction": "Safari 26 (September 2025) enabled WebGPU by default on macOS 26, iOS 26, iPadOS 26 and visionOS 26, per the gpuweb implementation status page and secondary news. One secondary source says it is still off on macOS 15 with Safari 26. The WebGL2 fallback remains the safe default for older Macs and iOS.",
+              "source_url": "https://github.com/gpuweb/gpuweb/wiki/Implementation-Status"
+            },
+            {
+              "claim": "About 26K GitHub stars; Apache-2.0; Microsoft-backed.",
+              "verdict": "confirmed",
+              "correction": "GitHub API 2026-11-17: 26,391 stars, Apache-2.0. I did not re-check the npm download ratio or the Stack Overflow counts.",
+              "source_url": "https://api.github.com/repos/BabylonJS/Babylon.js"
+            },
+            {
+              "claim": "The 9.0 blog mentions an expert leveraging 327 simultaneous AI agents, without detail.",
+              "verdict": "confirmed",
+              "source_url": "https://blogs.windows.com/windowsdeveloper/2026/03/26/announcing-babylon-js-9-0/"
+            },
+            {
+              "claim": "The Feb 2026 Audio v2 multi-spatial-sound bug, the snapshot rendering bugs, and the AI-assistance anecdotes in the 'That's it. I quit!' thread.",
+              "verdict": "unverifiable",
+              "correction": "These came from search snippets the original report admits it did not open, and I did not open them either. Treat them as unconfirmed anecdotes.",
+              "source_url": "https://forum.babylonjs.com/t/thats-it-i-quit/63047"
+            }
+          ],
+          "important_facts_missed": [
+            "There is an official, agent-oriented docs surface: doc.babylonjs.com/llms.txt plus a .md version of every docs page, and www.babylonjs.com/llms.txt with explicit guidance for AI assistants. This lets Claude Code curl exact current docs from the terminal, which directly reduces the 'outdated API' risk the report emphasised.",
+            "There is an official @babylonjs/mcp-servers npm package (since 2026-06-04, version-locked to 9.37.0) for the node/GUI/flow-graph editors. It is useful for agent-authored materials (Node Material) and GUI layouts, which can be made without a human operating the GUI. It is not a scene-editor or code-generation server.",
+            "Havok's real transfer cost is about 0.66 MB gzipped (2.09 MB raw, measured on v1.3.14), so it is not 2 MB on the wire.",
+            "Safari has shipped WebGPU by default since Safari 26 (Sept 2025) on macOS 26 and iOS/iPadOS 26. That makes WebGPU realistic on all four target desktop browsers, though WebGL2 stays the safer test path.",
+            "The official llms.txt describes Babylon Lite output as pixel-identical to Babylon.js, and the Lite repo is being pushed daily (last push 2026-11-18), so Lite's trajectory is a real factor in a long-running project.",
+            "Mobile/tablet performance (a 'maybe' target) was not researched: there are no figures on phone frame rates, memory or iOS Safari WebGL/WebGPU behaviour for a Babylon city scene.",
+            "No source compares how quickly a vehicle model can be built: Babylon has no vehicle controller, while some competitors (Rapier, cannon-es RaycastVehicle used with Three.js) ship one. This is the main practical gap for a driving game."
+          ],
+          "bias_check": "The report is mostly accurate and well-hedged. It slightly undersold Babylon on agent workflow: it said no official MCP or llms.txt exists, but both do (llms.txt with markdown pages for every doc, plus an official @babylonjs/mcp-servers package). It also overstated payload by calling Havok about 2 MB, when that is the raw size; gzipped it is about 0.66 MB. It left Safari WebGPU unresolved, though it has shipped since Sept 2025. Its vehicle-controller finding is correct, and that remains the biggest genuine risk for this game. Its bundle-size figures rest on third-party and 2023 anecdotes and should be treated as rough. Overall the 'good fit, with caveats' verdict holds, and it leans a little more favourable for an AI-driven terminal build than the report says.",
+          "corrected_bottom_line": "Babylon.js 9.x (9.0 on 2026-03-26; npm latest is 9.37.0, published 2026-11-16) is an Apache-2.0, Microsoft-backed, batteries-included web engine that an agent can build entirely from the terminal with npm, Vite and Playwright. Unlike what the report said, it has official AI-agent affordances: llms.txt, markdown versions of every docs page, and @babylonjs/mcp-servers for its node and GUI editors. Physics (Havok, MIT, about 0.66 MB gzipped wasm), a character controller, navmesh crowds, glTF with Draco/Meshopt/KTX2, and a WebGL2/WebGPU dual backend (WebGPU now on by default in Chrome, Edge, Firefox and Safari 26) cover most needs. The decisive weakness for this game is still driving: there is no official vehicle controller (the team said in Jan 2026 that none is expected soon), so car handling and pursuits must be custom code on Havok. Engine JS payload is larger than Three.js (about 0.7 MB gzipped for a small PBR scene per Babylon's own figure), while the creator's art will dominate download size. A one-day spike on the M4 Mac (city block, many lights, a Havok raycast car) is the right way to settle performance and driving feel before committing."
+        }
+      },
+      {
+        "key": "godot-web-and-playcanvas",
+        "research": {
+          "option": "Godot 4.x Web export (GDScript, Compatibility/WebGL2) and PlayCanvas (engine-only npm or hosted editor), compared against plain Three.js / Babylon.js",
+          "current_version_and_date": "Godot: 4.7.x stable (4.7.2-stable download page exists; 4.7 docs are live as of 2026-11-17; exact 4.7 release date not found). PlayCanvas Engine: v2.24.1 released 12 Nov 2026 (v2.23.0 on 1 Oct 2026; Editor v2.35 about 4 weeks before 17 Nov). Three.js r187 (30 Oct, year not shown on the page, presumably 2026). Babylon.js 9.37.0 (16 Nov, year not shown, presumably 2026).",
+          "summary": "Neither option is a clean win for a night-time, rainy, neon, first-person driving and on-foot game in a browser. Godot Web is the lowest-friction path for this creator and agent. The project already exists in Godot 4.7.2, and scenes are text files (.tscn/.tres). The agent has headless CLI export and several MCP servers that run the game, send input and take screenshots. It also has built-in CharacterBody3D and VehicleBody3D. The costs are real. The Web target is WebGL2 / Compatibility only, so there is no volumetric fog, SSR, SDFGI, VoxelGI, SSIL or CompositorEffects. Glow, SSAO, depth/height fog, tonemapping and baked-lightmap rendering do work, and a wet-neon look can be faked with emissive materials, glow, reflection probes (2 per mesh) and custom shaders. The wasm engine is about 5 MB brotli-compressed (about 40 MB uncompressed, per a May 2024 post). A community test lists 6.33 MB total for a near-empty 4.6.2 release build. The real download will be dominated by the .pck of city assets, which I found no numbers for. Safari/iOS is the weak spot, with memory-related WebGL context loss reports and a docs warning that Safari has WebGL2 issues. The default single-thread export avoids the COOP/COEP hosting requirement. VehicleBody3D is officially described as not realistic vehicle physics. No C#/.NET on Web, so GDScript only. PlayCanvas has the stronger web-native story: WebGPU with WebGL2 fallback, MIT license, tree-shakable ES modules and TypeScript. Its post-processing list (bloom, SSAO, TAA, DoF) and the Mojo Ski example (1.3 MB) show it can be small and quick to load. Against that, physics is ammo.js (Bullet compiled to WebAssembly), the examples are mostly not large open-world driving games, and the agent loses Godot's scene tooling. Compared with Three.js and Babylon.js, PlayCanvas engine-only is a more complete game framework but still needs the agent to write all the glue code. All three web-native engines would need the agent to invent the editor-less authoring workflow, and Three.js is the thinnest on built-in game systems. My read: if the priority is the creator being able to open and tweak things, and if the agent is expected to build and verify, Godot Web is the pragmatic choice for a vertical slice, provided you budget for Safari testing and asset size. If the plan is a big, visually rich city that must run well on Safari and phones, a WebGPU-capable web-native engine (PlayCanvas or Babylon) deserves a spike. Neither path avoids the need to measure on the real target browsers.",
+          "claims": [
+            {
+              "topic": "Godot renderer on Web",
+              "claim": "Godot 4 Web export can only use WebGL 2.0 via the Compatibility renderer. Forward+ and Mobile are unavailable on Web, and Godot does not support WebGPU, which is the prerequisite for them.",
+              "evidence": "Godot 'latest' (4.7) docs: 'Godot 4 can only target WebGL 2.0 ... Godot currently does not support WebGPU'.",
+              "source_url": "https://docs.godotengine.org/en/latest/tutorials/export/exporting_for_web.html",
+              "source_date": "Cached 2026-11-17, 4.7 docs",
+              "confidence": "high"
+            },
+            {
+              "topic": "Missing visual features",
+              "claim": "Compatibility lacks Volumetric Fog, Screen-Space Reflections, SSIL, SDFGI, VoxelGI and CompositorEffects. It supports depth/height fog, glow, SSAO, tonemapping, fullscreen-quad post-processing, 2 reflection probes per mesh, and rendering (not baking) of baked lightmaps.",
+              "evidence": "Official renderer feature comparison tables.",
+              "source_url": "https://docs.godotengine.org/en/stable/tutorials/rendering/renderers.html",
+              "source_date": "Cached 2026-11-17",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPU progress in Godot",
+              "claim": "WebGPU is not in the engine. A community proposal (#6646) thread shows an external experimental WebGPU renderer effort, with open challenges (threading, shader compilation start-up cost). Nothing official or shipped was found.",
+              "evidence": "Proposal issue text, plus the official docs statement above.",
+              "source_url": "https://github.com/godotengine/godot-proposals/issues/6646",
+              "source_date": "Date not captured, issue is from 2023 onward",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Threads and COOP/COEP",
+              "claim": "Since Godot 4.3, single-threaded Web export is the default. Only threaded builds need Cross-Origin-Opener-Policy: same-origin and Cross-Origin-Embedder-Policy: require-corp (SharedArrayBuffer). A PWA service-worker workaround can inject the headers. Single-thread works well on macOS and iOS, while threaded builds always had Apple compatibility issues.",
+              "evidence": "Official docs plus the Godot 4.3 web blog by the Web platform lead.",
+              "source_url": "https://godotengine.org/article/progress-report-web-export-in-4-3/",
+              "source_date": "2024-05-15 (flagged by Godot as possibly outdated), plus current 4.7 docs",
+              "confidence": "high"
+            },
+            {
+              "topic": "Audio on Web",
+              "claim": "Web exports use Web Audio 'Sample' playback by default. It gives low latency without threads but has no AudioEffects, no reverb or doppler, no procedural audio, and positional audio may not always work. Switching to 'Stream' restores features but increases latency, especially without threads. Single-thread stream playback had garbled audio on weaker machines.",
+              "evidence": "Docs audio section and the blog post.",
+              "source_url": "https://docs.godotengine.org/en/latest/tutorials/export/exporting_for_web.html",
+              "source_date": "4.7 docs, cached 2026-11-17",
+              "confidence": "high"
+            },
+            {
+              "topic": "C# on Web",
+              "claim": "C#/.NET projects in Godot 4 cannot be exported to Web, so GDScript (or C++ GDExtension with extra constraints) is required. A Reddit thread shows people still hit this with 4.7.",
+              "evidence": "Docs warning box; GDExtensions on web also need Extension Support and cross-origin isolation.",
+              "source_url": "https://docs.godotengine.org/en/latest/tutorials/export/exporting_for_web.html",
+              "source_date": "4.7 docs",
+              "confidence": "high"
+            },
+            {
+              "topic": "Download size",
+              "claim": "The 4.3 Web wasm was about 40 MB uncompressed and about 5 MB brotli-compressed. A community loading test lists total release-build downloads of 5.34 MB (4.3.0), 6.14 MB (4.4.1), 6.22 MB (4.5.2) and 6.33 MB (4.6.2). The project's author says Godot load times are 'really long' versus Unity, with no figures. No measured 4.7 size or load time, and no figure for a 3D city .pck, was found. An optimized custom export template is advised by the docs for faster load.",
+              "evidence": "Godot blog post for the wasm; third-party GitHub test page for totals (undated; hardware and network not stated).",
+              "source_url": "https://github.com/JohannesDeml/Godot-Web-LoadingTest",
+              "source_date": "Undated page, covers 4.3 to 4.6.2",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Safari/iOS",
+              "claim": "Docs say Safari has several WebGL 2.0 issues that other browsers lack, and recommend Chromium or Firefox if possible. A forum thread reports Godot 4.3 web builds hitting WebGL context loss and a crash on iOS browsers (worked on iOS 17, failed on iOS 18, no confirmed fix, memory the likely cause). Another thread says an iOS page force-reloads above roughly 300 MB runtime memory, which is only anecdotal. Mobile-specific advice: reduce textures and use VRAM compression.",
+              "evidence": "Official docs and forum threads from Sept to Dec 2024.",
+              "source_url": "https://forum.godotengine.org/t/webgl-context-loss-and-app-crash-in-godot-4-3-exported-web-on-ios-browsers/81024",
+              "source_date": "2024-09 to 2024-12",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Vehicle and character physics",
+              "claim": "VehicleBody3D (a raycast vehicle on RigidBody3D) and CharacterBody3D are built in and available on Web. The docs say VehicleBody3D 'has known issues and isn't designed to provide realistic 3D vehicle physics', has no gearing, and advanced behavior needs custom code.",
+              "evidence": "4.7 class reference.",
+              "source_url": "https://docs.godotengine.org/en/stable/classes/class_vehiclebody3d.html",
+              "source_date": "4.7 docs",
+              "confidence": "high"
+            },
+            {
+              "topic": "Agent workflow for Godot",
+              "claim": "Several MIT-licensed Godot MCP servers exist. godot-mcp-runtime has 43 tools: headless scene/node/script editing and validation, run_project, simulate_input (keys, mouse, UI clicks, actions), take_screenshot, live GDScript, and profiling. It needs Node 20+ and Godot 4.5+, with no addon. Other options named in an independent roundup: satelliteoflove/godot-mcp, Open Godot MCP, godot-mcp-flash (screenshots). Its README does not mention testing HTML5 exports, so these test the native build, not the browser build.",
+              "evidence": "Repository README and a playtesting-automation roundup.",
+              "source_url": "https://github.com/Erodenn/godot-mcp-runtime",
+              "source_date": "Undated, current as of crawl Nov 2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "PlayCanvas version and WebGPU",
+              "claim": "PlayCanvas Engine is MIT-licensed, built on WebGPU with WebGL2 fallback, and installs with npm. Latest is v2.24.1 (12 Nov 2026). The homepage says it has 'full WebGPU support, including compute shaders'. The 2.24.1 changelog mentions llms.txt indexes for coding agents.",
+              "evidence": "GitHub README and release pages, homepage.",
+              "source_url": "https://github.com/playcanvas/engine",
+              "source_date": "2026-11-12 (v2.24.1)",
+              "confidence": "high"
+            },
+            {
+              "topic": "PlayCanvas physics and vehicles",
+              "claim": "Physics is ammo.js, a WebAssembly port of Bullet. The docs include a 'Vehicle Physics' tutorial that drives a raycast vehicle, so the vehicle approach is similar to Godot's. The docs say other physics engines are only 'could be integrated'. No Jolt or Rapier support was confirmed.",
+              "evidence": "Official physics manual page.",
+              "source_url": "https://developer.playcanvas.com/user-manual/physics/",
+              "source_date": "Cached 2026-11",
+              "confidence": "high"
+            },
+            {
+              "topic": "PlayCanvas engine-only workflow and size",
+              "claim": "Engine-only use is supported through the ES-module build and a bundler such as Vite with TypeScript. A PlayCanvas forum answer tells non-Editor users to use the npm ES6 build and tree-shake. No measured engine bundle size was found. An old PlayCanvas blog says the Application class pulls in nearly everything, which limits tree-shaking, though it is likely outdated. The homepage cites a 1.3 MB Snapchat Web Lens game, Mojo Ski (9 Nov 2026), showing small builds are possible.",
+              "evidence": "Forum answer, README and homepage. Treat the homepage claim as marketing.",
+              "source_url": "https://playcanvas.com/",
+              "source_date": "2026-11 (homepage), forum answer undated",
+              "confidence": "medium"
+            },
+            {
+              "topic": "PlayCanvas shipped games",
+              "claim": "Homepage-listed browser games include Venge.io (multiplayer third-person shooter) and Fields of Fury (free-to-play multiplayer FPS). No open-world driving game was found in what I read. The 'lightning fast load times' line is marketing and has no numbers.",
+              "evidence": "Homepage query result.",
+              "source_url": "https://playcanvas.com/",
+              "source_date": "2026-11-17 cache",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Three.js and Babylon.js currency",
+              "claim": "Three.js is at r187 and Babylon.js at 9.37.0, both with active WebGPU work and weekly or faster releases. Three.js WebGPURenderer falls back to WebGL2 per its docs, and some third-party guides still call TSL and WebGPURenderer experimental, so version pinning is advised.",
+              "evidence": "GitHub release pages. Maturity claims come from blogs of mixed quality.",
+              "source_url": "https://github.com/BabylonJS/Babylon.js/releases",
+              "source_date": "2026-11-16",
+              "confidence": "medium"
+            }
+          ],
+          "performance_notes": "Godot: Official docs say WebAssembly Web exports perform significantly worse than native, and that Android/iOS native exports will always perform better by a significant margin; single-thread is 'not as performant' as threaded. I found no apples-to-apples benchmark against Three.js, Babylon or PlayCanvas. One self-reported forum post (Aug 2026, a 2D-ish mid-range Android prototype, author links to a paid tutorial site) claims about 80% of web slowness is the art pipeline. It reports 22 s down to 4.2 s load, 612 MB down to 152 MB peak memory, and 240 down to 38 draw calls. Treat it as anecdote, but it fits the docs' advice to use VRAM-compressed textures and keep draw calls low. For this game, rain, neon glow, many dynamic lights and a dense city on WebGL2 will be draw-call and fill-rate bound, and Compatibility is a simpler, less efficient lighting path than Forward+. A single-thread engine also runs physics, AI, rendering and audio on the main thread. PlayCanvas, Three.js and Babylon have no wasm engine cost and a WebGPU path, though their JS game code, physics (ammo.js wasm) and garbage collection are also on the main thread unless workers are used. I did not find measured frame rates for any of these on the M4 or on Safari.",
+          "load_time_and_size_notes": "Godot 4.3 wasm: about 40 MB raw and about 5 MB brotli, per the May 2024 blog. A third-party table gives total release downloads of 5.34 to 6.33 MB for near-empty projects across 4.3 to 4.6.2 (about 15% growth from 4.3 to 4.4), and the author says load times are long. Real games add a .pck. Anecdotes: a .pck of 56 MB and wasm of 35 MB reported on a forum (undated, version unclear), with a 22 s mid-range-Android load that was cut to 4.2 s after asset work. Hosting notes from the docs: serve wasm as application/wasm, enable gzip or brotli (GitHub Pages does on-the-fly gzip; itch.io and GitLab Pages do not). Custom export templates with unused features disabled can shrink the wasm; a blog reports a 3D-less web build at 31.5 MB uncompressed versus 44 MB. A 3D game cannot strip 3D. The city assets are the real cost, so expect to use GPU-compressed textures and mesh simplification. PlayCanvas: no verified engine bundle number found; plan to measure a minimal Vite build. The Mojo Ski 1.3 MB figure is a marketing claim for a small game. For both, the asset budget (city, cars, people, textures) will dominate over the engine runtime.",
+          "agent_workflow_notes": "Godot: Strongest for an agent with no GUI. The project is plain text (.tscn/.tres/.gd). CLI export is documented (godot --headless --export-release with presets), and the Godot MCP servers (godot-mcp-runtime, godot-mcp-flash, satelliteoflove, Open Godot MCP) let the agent run scenes, simulate keys and mouse, read state and take screenshots, all MIT and npx-runnable (needs Node 20+, Godot 4.5+, Node 24 is installed). Caveat: they exercise the native desktop build, so Web-specific issues (WebGL2 limits, Safari, audio mode, pointer lock, loading) still need a separate browser test. For the Web build, the agent can serve the export with a local static server and drive it with Playwright (already available in this environment) or Chrome tools, taking screenshots and console logs. The .pck and wasm need the right headers if threaded; single-thread avoids that. Blender 5.3 is installed so the agent can script glTF cleanups and compression. The creator has no way to hand-edit scenes, so the agent must do everything, which is feasible in text. PlayCanvas: Code-only is workable with npm, Vite and TypeScript, and the agent can test in headless Chromium with Playwright. The engine publishes llms.txt indexes for coding agents (noted in the v2.24.1 changelog) and has a TypeScript API. The hosted editor is browser GUI-based, which is poor for an agent; there is a REST API but I did not verify its coverage. Three.js and Babylon.js are similar to PlayCanvas engine-only: all gameplay, UI, camera and level-loading code is written by the agent, with no scene editor, but best-in-class model knowledge in LLMs. No-code authoring (placing buildings, tuning lighting) is the main weakness of every web-native option, since the creator cannot easily review a visual scene file; Godot scene files plus screenshots partly cover this.",
+          "strengths_for_this_game": [
+            "Godot: the creator already has 4.7.2 and a first-person project, and the engine ships CharacterBody3D, VehicleBody3D, navigation, animation, UI, audio buses and a physics layer, which fit on-foot plus driving, AI, and menus.",
+            "Godot: text scene formats and headless export plus MCP servers give the best agent loop for a creator with no coding or 3D background. Blender 5.3 and glTF/GLB import are native.",
+            "Godot: glow, SSAO, depth/height fog, tonemapping, emissive materials, reflection probes and custom shaders are all available on Compatibility, enough for a rainy neon look if lighting is faked.",
+            "Godot: single-thread default avoids COOP/COEP hosting problems and works on any static host. The wasm is about 5 MB compressed.",
+            "PlayCanvas: WebGPU with WebGL2 fallback, compute shaders, bloom, SSAO, TAA and DoF built in, MIT license, tree-shakable ES modules, TypeScript, glTF/Draco/Meshopt/Basis loaders, and a raycast-vehicle tutorial. Better headroom for a rich, wet, neon look in Chrome-class browsers.",
+            "PlayCanvas: no multi-megabyte wasm engine to load and an active, fast release cadence (v2.24.1 on 12 Nov 2026), plus llms.txt for agents.",
+            "Three.js and Babylon.js: biggest ecosystems and LLM familiarity, WebGPU in active development, with Babylon bundling more game-oriented features (physics, GUI, inspector) than Three.js."
+          ],
+          "risks_for_this_game": [
+            "Godot Web is WebGL2 only. No volumetric fog, SSR, SDFGI or VoxelGI, so rain-slick reflections and light shafts must be faked, and a dense neon city may be fill-rate and draw-call bound with no WebGPU path.",
+            "Safari/iOS: official docs flag Safari WebGL2 issues, and forum reports show iOS context loss and crashes tied to memory. Phones and tablets are a real risk and likely should remain out of scope for the first slice.",
+            "Load time and size: the 3D city, cars and people .pck is the unknown. No measured number found. Godot has a reputation for long load times, and the engine wasm is a fixed 5 MB-plus compressed cost.",
+            "Audio on Web is limited: sample playback has no effects, reverb or doppler, and stream playback adds latency. This matters for a scanner-radio and ambient-sound-heavy game.",
+            "VehicleBody3D is officially not realistic; a convincing driving feel may need a custom vehicle controller, and a GDScript single thread has to run physics, traffic and pedestrian AI. Web builds are also paused when the tab is in the background and need a user gesture for pointer lock, full screen and audio.",
+            "GDScript only on Web (no C#). The agent testing tools run the native build, so Web behavior needs its own browser test loop.",
+            "PlayCanvas: ammo.js physics is a heavy-ish wasm dependency with a less polished vehicle story, the hosted editor is GUI-driven and awkward for an agent, I found no shipped open-world driving game as evidence, and the creator's existing Godot project and knowledge would be abandoned.",
+            "Three.js and Babylon.js: the agent would write the engine glue (game loop, vehicle, AI, UI, scene loading). There is no editor for the creator to review scenes in, and WebGPU renderers are still moving fast (maturity claims conflict across blogs)."
+          ],
+          "open_questions": [
+            "Real measured .pck/total download size and load time for a Godot 4.7 3D scene of this scope (city block, 5 to 10 cars, pedestrians), on desktop Safari and Chrome. Needs a spike with real assets.",
+            "Frame rate on Safari (macOS) and Chrome for a night/rain/neon scene on the Compatibility renderer with 20+ lights, and how Safari performs relative to Chrome.",
+            "Whether Godot 4.7 changed anything about the Web target (WebGPU, wasm size, audio, Safari fixes). The 4.7 release page I queried had no web information, and I could not open the Reddit thread about 4.7 web export.",
+            "PlayCanvas engine-only bundle size and WebGPU support on Safari (macOS 26 era). Not verified.",
+            "Whether any of the Godot MCP servers can drive the Web export itself, or whether Playwright against the exported HTML is the only route.",
+            "Babylon.js and Three.js physics and vehicle choices (Havok, Rapier, Jolt) were not researched. Neither were Unity WebGL comparison numbers, as out of scope.",
+            "Date of the 4.7 stable release and whether the current stable is 4.7.2; the 4.7.2 download page exists, but the 4.7 release date was not found.",
+            "Firecrawl credits ran out partway; the WebSearch/WebFetch results that replaced it were summarized by a small model, and the Reddit pages could not be read."
+          ]
+        },
+        "verification": {
+          "option": "Godot 4.x Web export (GDScript, Compatibility/WebGL2) and PlayCanvas (engine-only npm or hosted editor), compared against plain Three.js / Babylon.js",
+          "verdicts": [
+            {
+              "claim": "Godot current version is 4.7.x stable (4.7.2); 4.7 release date not found",
+              "verdict": "partly_correct",
+              "correction": "Secondary news sources (2026) date 4.7-stable to June 18-19, 2026 and 4.7.2 to about August 18, 2026. The report also missed that Godot 4.8 is in beta: beta 1 was about 15 Oct 2026, and beta 2 and 3 followed, with stable expected late 2026. 4.7.2 is the current stable, but a 4.8 upgrade is close. The godotengine.org 4.7.1 maintenance article exists. I did not open the official 4.7 release post itself.",
+              "source_url": "https://godotengine.org/article/dev-snapshot-godot-4-8-beta-1/"
+            },
+            {
+              "claim": "Godot 4 Web export can only target WebGL 2.0 via Compatibility; Godot does not support WebGPU",
+              "verdict": "confirmed",
+              "correction": "Confirmed in the 4.7 stable docs (fetched 2026-11-17). Official 4.8 beta notes show no WebGPU web export. A community fork (dwalter/godotwebgpu, based on 4.6.2, beta, needs Chrome 113+/Safari 18+) and a GodotCon Boston 2026 talk show WebGPU is experimental and unofficial. A July 2026 secondary article had to retract a claim that 4.7 shipped WebGPU behind a flag.",
+              "source_url": "https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html"
+            },
+            {
+              "claim": "Compatibility lacks volumetric fog, SSR, SSIL, SDFGI, VoxelGI and CompositorEffects; supports depth/height fog, glow, SSAO, 2 reflection probes per mesh, rendering but not baking of lightmaps",
+              "verdict": "confirmed",
+              "correction": "Confirmed against the 4.7 renderers page. Additional limits it missed: 8 omni and 8 spot lights per mesh (can be increased), MSAA 3D supported, no FSR2. Lightmap baking needs RenderingDevice hardware, so bakes must be done on the Mac's Forward+/Mobile path, which the M4 can do.",
+              "source_url": "https://docs.godotengine.org/en/stable/tutorials/rendering/renderers.html"
+            },
+            {
+              "claim": "Single-thread export is the default since 4.3, COOP/COEP needed only for threads, Apple issues disappear with single-thread",
+              "verdict": "confirmed",
+              "correction": "Confirmed by the 4.7 docs and the 15 May 2024 blog. The blog is about 2.5 years old.",
+              "source_url": "https://godotengine.org/article/progress-report-web-export-in-4-3/"
+            },
+            {
+              "claim": "Web audio defaults to Sample playback (low latency, no effects/reverb/doppler); Stream playback restores features with higher latency",
+              "verdict": "confirmed",
+              "source_url": "https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html"
+            },
+            {
+              "claim": "C# projects cannot be exported to Web in Godot 4",
+              "verdict": "confirmed",
+              "correction": "Still stated in the 4.7 docs.",
+              "source_url": "https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html"
+            },
+            {
+              "claim": "4.3 wasm about 40 MB uncompressed / 5 MB brotli; community test 5.34 to 6.33 MB totals for 4.3.0 to 4.6.2",
+              "verdict": "confirmed",
+              "correction": "The numbers match the sources. Caveats: the 40/5 MB figure is from May 2024. The loading-test repo gives no load times, hardware or network, has no 4.7 row, and its 'really long vs Unity' remark is unmeasured. The 4.7 docs give only a ratio (gzip to about a quarter of original size) and no absolute sizes.",
+              "source_url": "https://github.com/JohannesDeml/Godot-Web-LoadingTest"
+            },
+            {
+              "claim": "Docs warn Safari has several WebGL 2.0 issues and recommend Chromium/Firefox; iOS context-loss reports",
+              "verdict": "partly_correct",
+              "correction": "The docs warning is confirmed. The iOS context-loss forum thread is from 2024 and I did not re-open it, so it is anecdotal and may be stale. The report missed that Safari 26 (Sept 2025, macOS Tahoe 26 / iOS 26) enables WebGPU by default. This strengthens the case for WebGPU-capable web-native engines on Apple devices, a path Godot cannot use.",
+              "source_url": "https://web.dev/blog/webgpu-supported-major-browsers"
+            },
+            {
+              "claim": "The creator already has Godot 4.7.2 and a first-person project; 'the project already exists in Godot 4.7.2'",
+              "verdict": "refuted",
+              "correction": "The task context says only that Godot 4.7.2 is installed on the machine. No project for this game exists yet. Any existing Godot first-person project belongs to a different game, so the 'already exists / would be abandoned' argument for Godot is overstated.",
+              "source_url": ""
+            },
+            {
+              "claim": "VehicleBody3D is officially not realistic vehicle physics",
+              "verdict": "confirmed",
+              "correction": "Per the class reference wording as reported. I did not re-open the page myself, but the wording has been in the docs for years.",
+              "source_url": "https://docs.godotengine.org/en/stable/classes/class_vehiclebody3d.html"
+            },
+            {
+              "claim": "godot-mcp-runtime: 43 tools, Node 20+, Godot 4.5+, no addon, MIT, input simulation and screenshots, no web-export testing",
+              "verdict": "confirmed",
+              "correction": "README confirms 43 tools, Node 20+, Godot 4.5+, no addon, MIT, input simulation and screenshots (960x540 preview plus full PNG, blank-frame detection), and no mention of web/HTML5. It is a small community project (about 101 stars, 20 forks), not an official tool, so its maintenance risk is real. The other MCP servers named were not verified.",
+              "source_url": "https://github.com/Erodenn/godot-mcp-runtime"
+            },
+            {
+              "claim": "PlayCanvas Engine v2.24.1 released 12 Nov (2026); changelog mentions llms.txt for coding agents; v2.23.0 on 1 Oct",
+              "verdict": "confirmed",
+              "correction": "The release page shows 12 Nov and 1 Oct without a year. 2026 is inferred from sequence and context. The llms.txt line is present in v2.24.1.",
+              "source_url": "https://github.com/playcanvas/engine/releases"
+            },
+            {
+              "claim": "PlayCanvas physics is ammo.js; other engines only 'could be integrated'; no Jolt/Rapier support",
+              "verdict": "partly_correct",
+              "correction": "ammo.js is still the only built-in backend; v2.23.0 has ammo-only physics fixes plus a gravityScale property. The official 'Alternatives to ammo.js' page now describes a PhysicsWorld backend layer and links Jolt, Rapier, PhysX and Box3D bindings. Only p2.js has a listed integration. A third-party Jolt-based PlayCanvas physics components package (gamebop) exists, but I did not verify its maturity.",
+              "source_url": "https://developer.playcanvas.com/user-manual/physics/ammo-alternatives/"
+            },
+            {
+              "claim": "PlayCanvas hosted editor is GUI-based and poor for an agent; REST API coverage unverified",
+              "verdict": "refuted",
+              "correction": "There is an official, MIT-licensed PlayCanvas Editor MCP server (npm @playcanvas/editor-mcp-server, Node 22.18+, about 125 tools per Glama, with a documented Claude Code setup command). An Editor tab must stay open in a browser and be connected manually, and a forum thread reports errors adding entities. So agent-driven Editor work is possible but needs a live browser session, and its robustness is unproven.",
+              "source_url": "https://developer.playcanvas.com/user-manual/editor/mcp-server/"
+            },
+            {
+              "claim": "Three.js r187 (30 Oct) and Babylon.js 9.37.0 (16 Nov), presumably 2026",
+              "verdict": "confirmed",
+              "correction": "Release pages show those tags and dates without years. 2026 is a reasonable inference from the GitHub footer and release cadence.",
+              "source_url": "https://github.com/BabylonJS/Babylon.js/releases"
+            },
+            {
+              "claim": "PlayCanvas Mojo Ski 1.3 MB, Venge.io/Fields of Fury, 'lightning fast load times'",
+              "verdict": "unverifiable",
+              "correction": "Homepage marketing; not re-checked (Firecrawl credits exhausted).",
+              "source_url": "https://playcanvas.com/"
+            },
+            {
+              "claim": "Aug 2026 forum anecdote: 22 s to 4.2 s load, 612 to 152 MB memory, 240 to 38 draw calls",
+              "verdict": "unverifiable",
+              "correction": "Not re-located. Treat it as anecdote, as the report already says.",
+              "source_url": ""
+            }
+          ],
+          "important_facts_missed": [
+            "Godot 4.8 is in beta (beta 1 about 15 Oct 2026, beta 3 around now), with stable expected late 2026. Plan for an upgrade mid-project. I found no web/WebGPU change in it.",
+            "Safari 26 (Sept 2025; macOS Tahoe 26, iOS/iPadOS 26) ships WebGPU on by default, and Chrome has WebGPU too. Godot cannot use it officially. PlayCanvas, Babylon and Three.js can, and that changes the Safari/iPad picture in their favour.",
+            "An unofficial Godot WebGPU fork exists (dwalter/godotwebgpu, based on 4.6.2, beta), and there was a GodotCon Boston 2026 talk on it. It is not production-ready, but it is the only WebGPU route for Godot.",
+            "Official PlayCanvas Editor MCP server (about 125 tools, MIT, Node 22.18+). This partly closes the 'editor is GUI-only' gap, though it needs an open, connected browser Editor tab, which conflicts with a creator who prefers not to have the agent drive the browser.",
+            "The PlayCanvas PhysicsWorld backend layer is documented. Jolt, Rapier and PhysX are listed as candidate engines, and a community Jolt components package exists.",
+            "Babylon.js ships an official Havok physics plugin (wasm). This is from prior knowledge and was not re-verified this session. That makes Babylon's built-in physics arguably stronger than PlayCanvas's ammo.js. The report left Babylon physics unresearched.",
+            "Godot Compatibility per-mesh light limits (8 omni + 8 spot by default). These matter for a neon street full of lights.",
+            "Lightmaps can only be baked on RenderingDevice hardware (the Mac's Forward+), then rendered in Compatibility, so the build pipeline must bake natively before the web export.",
+            "Godot headless web export needs the matching 4.7.2 export templates downloaded and installed first. This is a CLI-doable step the report did not mention.",
+            "Headless Chromium in Playwright often falls back to software WebGL (SwiftShader), so automated browser screenshots and FPS numbers may not reflect real GPU performance. Headed or GPU-enabled runs are needed for meaningful perf tests of any of these engines.",
+            "Godot loading-test sizes have no stated hardware or network and no load-time numbers. No 4.7 row exists."
+          ],
+          "bias_check": "The report is mostly accurate on Godot's documented web limits. It slightly oversold Godot on agent-workflow and continuity grounds. It claimed an existing project for this game, which the context does not support, and it leaned on small community MCP servers whose web-build coverage is nil. It undersold the web-native options: it missed Safari 26's default WebGPU, the official PlayCanvas Editor MCP server, the PlayCanvas physics backend layer, and Babylon's Havok physics. Its version and date facts hold up apart from the missed Godot 4.8 beta. Its reasoning that assets, not the engine runtime, dominate download size is sound but rests on unmeasured assumptions.",
+          "corrected_bottom_line": "Godot 4.7.2 Web is a viable vertical-slice path. It has built-in character and vehicle nodes, text scenes, and a headless CLI export that an agent can drive. But it is locked to WebGL2/Compatibility with no official WebGPU even in the 4.8 beta. That means faked wet-neon effects, per-mesh light caps, limited web audio, and Safari WebGL2 caveats, and its agent test tools exercise the native build, not the browser build. The web-native engines are stronger on browser tech than the report credited: Safari 26 and Chrome both ship WebGPU, PlayCanvas has an official Editor MCP server, and Babylon has Havok physics. The cost is that the agent writes more glue code, and authoring in an editor still needs a live browser tab. Godot is not the obvious winner by default, because no project exists for this game yet. A short spike that measures one rainy neon street with real assets in Godot Web vs Babylon or PlayCanvas, on Chrome and Safari, is the honest way to decide. Unity is not installed and was not assessed here."
+        }
+      },
+      {
+        "key": "precedents",
+        "research": {
+          "option": "precedents",
+          "summary": "Evidence on precedents is thinner than the hype suggests. I found no shipped, polished first-person driving city game in a browser from 2023-2026 with published size, performance and post-mortem data. The nearest open precedents are an open-source Vilnius driving prototype (Three.js, built with Claude, October 2026, 'early playable prototype', 60 fps on an M-series laptop, no traffic, pedestrians, police or audio yet) and EverRealm, a first-person open-world RPG on Three.js with about 1,800 NPCs (September to October 2026). Both are small, solo and unproven at scale, and neither gives a download size. Documented AI-agent-built 3D browser games are mostly demos and prototypes made in days; the only stated failure modes I could verify are performance and memory hygiene (draw calls, no dispose(), oversized models, pixel ratio, post-processing). Performance budgets are consistent across sources: draw calls are the binding constraint, not triangles. Desktop tolerates hundreds of draw calls and mobile about 100. A rainy neon night city with traffic and pedestrians is feasible on an M4 only with instancing, baked or fake lighting, a handful of real lights, and an adaptive quality governor. WebGPU is now shipped in Chrome/Edge (113+), Safari 26+ (macOS/iOS), and Firefox on Windows (141) and Apple Silicon Mac (145 on macOS 26+, 147 on all macOS), with Firefox Android and Linux still partial. Three.js WebGPURenderer falls back to WebGL 2 automatically. Unity web has a hard 2GB heap and iOS Safari crash reports, and Godot 4.7.2's web export wasm is about 39.5 MB raw (about 10 MB gzipped) before any game content. Several sources are blogs, forum posts or video pages, not primary docs. Firecrawl credits ran out mid-run, so some planned pages (Reddit 4-games thread, Unity 50MB thread, Reddit WebGPU benchmark) were not opened.",
+          "claims": [
+            {
+              "topic": "precedent: open-world driving city in browser",
+              "claim": "An open-source browser open-world game of real Vilnius (Three.js, 1:1 scale) is playable with walking, driving and a tyre-physics car, reported at 60 fps on an Apple M-series laptop. It streams the city's photogrammetry mesh with LOD, a GPU memory budget, a frame-time quality governor and dynamic resolution. Traffic, pedestrians, police, audio and saving are listed as not started, and it is labelled an early playable prototype. It was co-authored by Claude Opus 5.5 (commit Oct 18, 2026). Download size is not stated: the city mesh streams from a municipal server and the repo asks for about 3 GB of disk for data.",
+              "evidence": "README: 'What works today' table; 'Quests, NPCs, police, audio, saving: Not started'; commit co-author line; 'No releases published'; 1 star.",
+              "source_url": "https://github.com/bolivian-peru/vilnius-3d-game",
+              "source_date": "2026-10-18",
+              "confidence": "high"
+            },
+            {
+              "topic": "precedent: AI-built game stack and testing",
+              "claim": "The Vilnius project was built with an AI agent. It uses Node/Vite with plain Three.js JS modules, Python for the data pipeline and headless Blender for tile building. Its agent-friendly test is a headless Chromium script (Playwright) that plays the game with key presses and checks physics, memory, frame times and console errors. It also carries an uncompiled Unreal project ('written but never compiled'), which is evidence of agent-written code that was never verified.",
+              "evidence": "README 'Testing' paragraph and the Unreal row ('written but never compiled'); languages JS 60%, Python 28.5%, C++ 9.8%.",
+              "source_url": "https://github.com/bolivian-peru/vilnius-3d-game",
+              "source_date": "2026-10-18",
+              "confidence": "high"
+            },
+            {
+              "topic": "precedent: first-person open world on Three.js with crowds",
+              "claim": "EverRealm is a first-person open-world RPG in the browser (Three.js, Vite, cannon-es physics) with chunked terrain streaming, a city of nearly 1,700 buildings and about 1,800 citizens. It uses one InstancedMesh per building model, billboard crowds on a shared InstancedMesh, and full skinned NPCs only within about 40 units (swapped back past 65). Quality is a ladder of discrete tiers (Low to Ultra) driven by a frame-rate governor that only steps down (30 fps floor, 6 s median windows, 10 s warm-up). It runs on itch.io. No download size was given and the post is a self-reported solo showcase.",
+              "evidence": "Forum showcase post and replies (Sep 21 to Oct 5, 2026) describing instancing, billboard LOD and the one-way governor.",
+              "source_url": "https://discourse.threejs.org/t/everrealm-a-first-person-open-world-retro-fantasy-rpg/94518",
+              "source_date": "2026-10-05",
+              "confidence": "medium"
+            },
+            {
+              "topic": "AI-built games: failure modes",
+              "claim": "Where vibe-coded Three.js scenes break: oversized models (tens of MB GLBs, 4096px textures cause long loads and mobile tab reloads), missing dispose() leaks (geometries/textures counters keep climbing and fps drops after scene changes), too many draw calls (no instancing or merging), unbounded devicePixelRatio, and post-processing passes (bloom/SSAO can halve fps on phones). It notes AI-generated scenes rarely instance or dispose, so a dedicated optimisation pass is needed. This is a commercial resource site, not a measured study, and says nothing about collision or physics bugs.",
+              "evidence": "Fetched page lists 'five most common causes'; the search snippet adds that AI-generated scenes rarely instance or dispose.",
+              "source_url": "https://threejsresources.com/ai/vibe-coding",
+              "source_date": "2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "AI-built games: scale and pace",
+              "claim": "Public accounts of AI-agent-built Three.js games are mostly short-timeline projects (for example a game built in about two days with Claude Code, and a 'zero code' 3D game generator tutorial). One reported tip is to build an in-game configurator with sliders to cut back-and-forth with the agent. I did not find a verified post-mortem of an AI-built game at the scale of an open driving city with traffic, AI and mission systems beyond the Vilnius prototype.",
+              "evidence": "daily.dev summary of a May video (Laser Nuke, two days, Claude Code) and Meshy tutorial pages. Only search snippets were read, not the originals.",
+              "source_url": "https://daily.dev/posts/three-js-game-development-claude-code-is-nuts-bchix6c20",
+              "source_date": "2026-05-25",
+              "confidence": "low"
+            },
+            {
+              "topic": "performance budget: draw calls",
+              "claim": "The widely quoted guidance from a Three.js maintainer is roughly under 100 draw calls and under 100,000 vertices for mobile. A 2026 blog says desktop machines handle several hundred to low thousands because the real cost is CPU-side submission. Another blog's rule of thumb for smooth 60 fps on mid-range hardware is about 100-150 draw calls and a couple of million triangles. Triangle count matters less than draw calls, and instancing and batching (InstancedMesh, BatchedMesh) are the main levers. These are rules of thumb from blogs, not benchmarks on specific chips.",
+              "evidence": "Item 30 cites the three.js forum quote; the second post gives its own budget; it warns that an M-series Mac hides problems.",
+              "source_url": "https://www.utsubo.com/blog/threejs-best-practices-100-tips",
+              "source_date": "2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "WebGPU vs WebGL performance",
+              "claim": "WebGPU is not automatically faster. A 2026 Three.js blog says WebGPU helps most with many draw calls and compute, and forum users report scenes where WebGPURenderer is slower than WebGLRenderer. A Reddit test snippet reports draw calls dropping from 331 to 171 in one scene, but 'not automatically faster on every device'. I could not open the Reddit post, so treat that as unverified.",
+              "evidence": "utsubo 'Three.js in 2026' page text and the Reddit search snippet.",
+              "source_url": "https://www.utsubo.com/blog/threejs-2026-what-changed",
+              "source_date": "2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "WebGPU availability: Chromium",
+              "claim": "WebGPU shipped in Chrome/Edge 113 on Mac, Windows and ChromeOS. It reached Android in Chrome 121 (Android 12+, ARM/Qualcomm/Intel GPUs) and Linux Intel Gen12+ in Chrome 144. Caniuse shows Chrome versions up to 160 as supported, and Android Chrome 157 as supported. Global support is shown as about 88.6%, with Safari desktop marked 'partial'.",
+              "evidence": "gpuweb Implementation Status wiki and caniuse (fetched Nov 2026).",
+              "source_url": "https://github.com/gpuweb/gpuweb/wiki/Implementation-Status",
+              "source_date": "2026-11",
+              "confidence": "high"
+            },
+            {
+              "topic": "WebGPU availability: Safari and Firefox",
+              "claim": "Safari 26 on macOS Tahoe 26, iOS 26, iPadOS 26 and visionOS 26 ships WebGPU enabled by default. Caniuse lists iOS Safari 26.0-27.2 as supported, but desktop Safari 26-27.x as 'partial', meaning enabled by default only on macOS 26 Tahoe or later. Firefox shipped it on Windows in 141 (July 2025), Apple Silicon Mac on macOS 26+ in 145 and all macOS versions in 147. Linux and Android are still Nightly or behind a flag, and Mozilla expected to do Android work in 2026. Caniuse's 'Firefox: disabled by default' row conflicts with the wiki's shipping versions; the wiki is the more detailed source.",
+              "evidence": "gpuweb wiki Safari and Firefox tables; web.dev announcement of Nov 25, 2025; caniuse notes.",
+              "source_url": "https://web.dev/blog/webgpu-supported-major-browsers",
+              "source_date": "2025-11-25",
+              "confidence": "high"
+            },
+            {
+              "topic": "Three.js WebGPU fallback and version",
+              "claim": "Three.js WebGPURenderer falls back to a WebGL 2 backend automatically (or via forceWebGL), so one codebase can cover browsers without WebGPU. The release history lists r184 on April 16, 2026 and r187 as the latest at the time of that article. r184 added TSL materials on WebGLRenderer and FSR 1 / TAAU upscaling nodes. Version churn is a risk: r186 removed PCFSoftShadowMap and minified builds.",
+              "evidence": "utsubo 2026 changelog page and the official WebGPURenderer docs showing the forceWebGL option.",
+              "source_url": "https://www.utsubo.com/blog/threejs-2026-what-changed",
+              "source_date": "2026",
+              "confidence": "medium"
+            },
+            {
+              "topic": "Unity web memory limit",
+              "claim": "Unity 6's web heap can grow only up to 2 GB, and automatic resizing can crash if the browser cannot find a contiguous address block. The manual says mobile browsers need advanced tuning and does not cover iOS Safari. A forum thread reports that Unity 6 advertised 4 GB support but a game still crashed on iOS even with 4 GB devices. A separate thread title claims a 50 MB build limit for phones, which I could not open.",
+              "evidence": "Unity 6000.1 manual 'Memory in Unity Web' (fetched); forum excerpts (Nov 2024).",
+              "source_url": "https://docs.unity3d.com/6000.1/Documentation/Manual/webgl-memory.html",
+              "source_date": "2025",
+              "confidence": "high"
+            },
+            {
+              "topic": "Godot web export size and constraints",
+              "claim": "A Godot 4.7.2 single-threaded web export has an index.wasm of 39,514,754 bytes (about 10.1 MB gzip -9) before any game content. Thread support needs Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers (SharedArrayBuffer). Cloudflare Pages caps files at 25 MiB, below the raw wasm size. Godot 4 C# projects cannot export to the web. The source is a vendor blog (Ziva), but it reports its own test.",
+              "evidence": "Table of file sizes and FAQ in the blog; dated Nov 5, 2026 for hosting limits.",
+              "source_url": "https://ziva.sh/blogs/godot-web-export",
+              "source_date": "2026-11-05",
+              "confidence": "medium"
+            }
+          ],
+          "performance_notes": "What the evidence supports for a rainy neon night city on integrated GPU or Apple Silicon (M4 16GB is a strong dev machine and will hide problems on weaker targets):\n- Draw calls are the main limit. Targets reported: about 100 (maintainer quote, mobile), about 100-150 for mid-range 60 fps, and several hundred to low thousands on desktop. A city needs instanced buildings, props, cars, lamps and pedestrians; EverRealm gets hundreds of houses down to a handful of calls with one InstancedMesh per model per chunk.\n- Triangles: the sources say 'a couple million' is fine on mid-range hardware. Only the draw-call figures come from a maintainer quote; the triangle figure is a blogger's estimate.\n- Resolution and post-processing are the next costs. Cap devicePixelRatio and use a resolution slider or dynamic resolution. Each EffectComposer pass is a full-screen render, so rain, bloom and neon glow must be budgeted to one or two passes. The Vilnius prototype uses dynamic resolution and a frame-time governor.\n- Lights: I found no cited source with a measured count of dynamic lights or shadows for browser games. Do not invent a number; the general practice implied by the sources is a few real lights plus emissive or baked neon and instanced decals. This is an open item to measure in a spike.\n- Memory: Unity web is capped at a 2 GB heap, and iOS Safari crashes are reported. For Three.js the main leaks come from missing dispose() and large textures (resize to 2048 or less, use Draco/Meshopt). I found no authoritative per-tab texture memory limit number.\n- Quality governor: both EverRealm and Vilnius ship adaptive quality, and EverRealm's is a one-way step-down to avoid oscillation. Plan for this from day one.\n- WebGPU may reduce CPU overhead for draw-call-heavy scenes but is not guaranteed faster, so use the WebGL 2 fallback as the baseline and benchmark both.",
+          "load_time_and_size_notes": "Hard numbers I verified: Godot 4.7.2 web export wasm 39.5 MB raw and about 10.1 MB gzip, engine only. Unity web heap max 2 GB. Three.js itself is a library of a few hundred KB, but I did not open a source stating the exact minified or gzipped size, so no figure is given. I found no published download size or load time for the Vilnius prototype (it streams from a server) or EverRealm. The 'Unity 230MB to 3.7MB' Reddit title is an unverified headline. For this game, model weight will dominate: city kits, cars and characters supplied as GLB/FBX should be converted to compressed GLB (Draco or Meshopt, KTX2 textures, 2048px max) and streamed by chunk behind a loading screen. Host limits matter: Cloudflare Pages 25 MiB per file, itch.io 200 MB per file / 500 MB total (as of Nov 2026 per the Ziva blog).",
+          "agent_workflow_notes": "An AI agent can do most of this end-to-end in text: Vite plus Three.js, glTF pipeline scripts, Blender 5.3 headless for conversion and baking, and Playwright/headless Chromium for testing. The Vilnius repo is a concrete example: one script plays the game with key presses and checks physics, memory, frame times and console errors, and saves screenshots. Reported good practice: give the agent a browser and visual references, add in-game debug sliders (configurator), and use renderer.info (calls, triangles, geometries, textures) as an objective regression metric. Weak spots: headless Chromium uses software or limited GPU rendering, so fps numbers from CI are not representative of a real Safari or integrated GPU; the creator must play-test in real browsers. Feel (driving, camera, scoring), art direction and 'does it look good' still need a human or a reviewer model looking at screenshots. Evidence of agent-written code that was never verified is visible in the Vilnius repo (the uncompiled Unreal project). Unity is the weakest fit for this workflow here because the editor-centric scene and asset workflow is hard to drive from a terminal, and Unity is not installed; Godot has a text-based scene format and CLI export but a 39.5 MB engine wasm and no C# web export. I did not verify Unity's agent tooling.",
+          "strengths_for_this_game": [
+            "Plain Three.js plus Vite is text-only and fully agent-drivable, with working open precedents (Vilnius driving prototype, EverRealm first-person open world) built by AI agents or solo developers",
+            "WebGPU is now shipped in Chrome/Edge 113+, Safari 26 (macOS and iOS), and Firefox on Windows and Apple Silicon Macs, and Three.js falls back to WebGL 2 automatically, so desktop coverage is wide",
+            "Instancing, chunk streaming, billboard-to-skinned crowd LOD and an adaptive quality governor are documented, working patterns that suit traffic and pedestrians",
+            "Headless Chromium automated play-testing with frame-time and memory checks is demonstrated in an actual repo",
+            "A night, rainy scene hides draw distance with fog and darkness, which suits chunk streaming (EverRealm uses fog to hide chunk edges)"
+          ],
+          "risks_for_this_game": [
+            "No verified precedent of a complete browser first-person driving game with traffic, police AI, scripted incidents and mission/menus; the closest examples are early prototypes or showcases without published sizes",
+            "Draw-call and CPU limits: a dense neon city with traffic and pedestrians needs disciplined instancing and merging; supplied unoptimised GLB/FBX assets are the most likely cause of failure",
+            "AI-built scenes typically skip dispose() and instancing, so budget a dedicated optimisation pass and use renderer.info as a metric",
+            "Rain, bloom and many dynamic lights are fill-rate and post-processing heavy; I found no measured light or shadow counts, so this needs an early spike on a real integrated GPU",
+            "Safari on desktop is shown as only 'partial' WebGPU support (macOS 26 and later), Firefox Android and Linux are partial, and WebGPU is not always faster, so the WebGL 2 path must be tested everywhere",
+            "Unity web: 2 GB heap, reported iOS Safari crashes, and an editor-heavy workflow that is poor for terminal agents; Godot web: 39.5 MB engine wasm, no C# web export, and threaded builds need special HTTP headers",
+            "Phones and tablets are a poor target: mobile draw-call budgets are about 100 and iOS memory crashes are reported",
+            "Three.js release churn (APIs removed in r186/r187) means pinning a version",
+            "M4 16GB results will overstate performance for typical integrated-GPU Windows laptops; test on weaker hardware"
+          ]
+        },
+        "verification": null
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Research"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Verify"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "research:unity-web",
+      "phaseIndex": 1,
+      "phaseTitle": "Research",
+      "agentId": "a32ef1f6edb515fef",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1794975536595,
+      "queuedAt": 1794975536381,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Unity 6.x with Web platform export (WebGL2, optional WebGPU)",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975670824,
+      "tokens": 183247,
+      "toolCalls": 29,
+      "durationMs": 134227,
+      "resultPreview": "{\"option\":\"Unity 6.x with Web platform export (WebGL2, optional WebGPU)\",\"current_version_and_date\":\"Unity 6000.6 is the current stable line (6000.6.3f1 released 2026-09-24; docs for 6000.7 and alpha 6000.7.0a1 also exist). Per Unity staff, WebGPU became a fully supported, non-experimental feature in 6000.6 (announced 2026-08-24). WebGL2 remains the default API; WebGPU must be added manually in Pl…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "research:threejs",
+      "phaseIndex": 1,
+      "phaseTitle": "Research",
+      "agentId": "a660bfe338a2a78c8",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1794975536595,
+      "queuedAt": 1794975536381,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Three.js (plain JS/TS + Vite), optionally react-three-fiber",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975736713,
+      "tokens": 152925,
+      "toolCalls": 37,
+      "durationMs": 198100,
+      "resultPreview": "{\"option\":\"Three.js (plain JS/TS + Vite), optionally react-three-fiber\",\"current_version_and_date\":\"three r187 (npm three@0.187.0), published 2026-10-30; r186 on 2026-09-08. Releases in 2026 every 7-11 weeks (r183 Feb 18, r184 Apr 16, r185 Jun 25, r186 Sep 8, r187 Oct 30). Source: Utsubo blog updated 2026-11-06 (11 days old), and the GitHub releases page marks r187 as Latest. Breaking changes near…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "research:babylonjs",
+      "phaseIndex": 1,
+      "phaseTitle": "Research",
+      "agentId": "a14950d331e0fb97c",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1794975536596,
+      "queuedAt": 1794975536381,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Babylon.js",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975690316,
+      "tokens": 189087,
+      "toolCalls": 33,
+      "durationMs": 151702,
+      "resultPreview": "{\"option\":\"Babylon.js\",\"current_version_and_date\":\"Babylon.js 9.0 released 2026-03-26 (official blog + forum). npm registry \\\"latest\\\" for @babylonjs/core was 9.37.0 when fetched on 2026-11-17 (9.x ships frequent minor releases). A sibling engine \\\"Babylon Lite\\\" (WebGPU-only, no WebGL fallback, API not backward-compatible) was announced 2026-06-17.\",\"summary\":\"Babylon.js is a mature, Microsoft-ba…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 4,
+      "label": "research:godot-web-and-playcanvas",
+      "phaseIndex": 1,
+      "phaseTitle": "Research",
+      "agentId": "a3220c3fb1301a032",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1794975536596,
+      "queuedAt": 1794975536381,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Godot 4.x Web export (GDScript, Compatibility/WebGL2) and P…",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975680156,
+      "tokens": 141526,
+      "toolCalls": 31,
+      "durationMs": 141541,
+      "resultPreview": "{\"option\":\"Godot 4.x Web export (GDScript, Compatibility/WebGL2) and PlayCanvas (engine-only npm or hosted editor), compared against plain Three.js / Babylon.js\",\"current_version_and_date\":\"Godot: 4.7.x stable (4.7.2-stable download page exists; 4.7 docs are live as of 2026-11-17; exact 4.7 release date not found). PlayCanvas Engine: v2.24.1 released 12 Nov 2026 (v2.23.0 on 1 Oct 2026; Editor v2.3…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 5,
+      "label": "research:precedents",
+      "phaseIndex": 1,
+      "phaseTitle": "Research",
+      "agentId": "ae479ae3bae0c4b64",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1794975536596,
+      "queuedAt": 1794975536381,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "precedents",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975647720,
+      "tokens": 154496,
+      "toolCalls": 22,
+      "durationMs": 109104,
+      "resultPreview": "{\"option\":\"precedents\",\"summary\":\"Evidence on precedents is thinner than the hype suggests. I found no shipped, polished first-person driving city game in a browser from 2023-2026 with published size, performance and post-mortem data. The nearest open precedents are an open-source Vilnius driving prototype (Three.js, built with Claude, October 2026, 'early playable prototype', 60 fps on an M-serie…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 6,
+      "label": "verify:unity-web",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a4747bc6949ac36a3",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1794975670841,
+      "queuedAt": 1794975670828,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Unity 6.x with Web platform export (WebGL2, optional WebGPU)",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975820515,
+      "tokens": 100585,
+      "toolCalls": 22,
+      "durationMs": 149674,
+      "resultPreview": "{\"option\":\"Unity 6.x with Web platform export (WebGL2, optional WebGPU)\",\"verdicts\":[{\"claim\":\"Current stable is 6000.6.3f1 (2026-09-24); LTS status of 6000.6 unconfirmed\",\"verdict\":\"partly_correct\",\"correction\":\"The report's patch is out of date. Release notes show 6000.6.6f1 (released 2026-10-15) and 6000.6.7f1 (released 2026-10-21). Unity 6.6 was announced on 2026-09-01. It is a 'Supported' rel…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 7,
+      "label": "verify:godot-web-and-playcanvas",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a1458e9f541691fdb",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1794975680161,
+      "queuedAt": 1794975680159,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Godot 4.x Web export (GDScript, Compatibility/WebGL2) and P…",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975803803,
+      "tokens": 97077,
+      "toolCalls": 19,
+      "durationMs": 123642,
+      "resultPreview": "{\"option\":\"Godot 4.x Web export (GDScript, Compatibility/WebGL2) and PlayCanvas (engine-only npm or hosted editor), compared against plain Three.js / Babylon.js\",\"verdicts\":[{\"claim\":\"Godot current version is 4.7.x stable (4.7.2); 4.7 release date not found\",\"verdict\":\"partly_correct\",\"correction\":\"Secondary news sources (2026) date 4.7-stable to June 18-19, 2026 and 4.7.2 to about August 18, 2026…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 8,
+      "label": "verify:babylonjs",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "a4e306b4d7aa86348",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1794975690320,
+      "queuedAt": 1794975690318,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Babylon.js",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975799545,
+      "tokens": 95471,
+      "toolCalls": 17,
+      "durationMs": 109225,
+      "resultPreview": "{\"option\":\"Babylon.js\",\"verdicts\":[{\"claim\":\"Babylon.js 9.0 released 2026-03-26; headline features include Clustered Lighting, Volumetric Lighting, Node Particle Editor, Frame Graph v1, Animation Retargeting, Gaussian splats.\",\"verdict\":\"confirmed\",\"correction\":\"The npm time for @babylonjs/core 9.0.0 is 2026-03-26T09:46Z. The Windows blog (opened 2026-11-17) also lists Textured Area Lights and Par…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 9,
+      "label": "verify:threejs",
+      "phaseIndex": 2,
+      "phaseTitle": "Verify",
+      "agentId": "af18ae6b7e6012a1e",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1794975736719,
+      "queuedAt": 1794975736716,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Three.js (plain JS/TS + Vite), optionally react-three-fiber",
+      "promptPreview": "CONTEXT (today is 2026-11-17; prefer sources from 2025-2026 and say how old each source is):\nA solo creator with NO coding or 3D experience wants a browser-playable 3D game. An AI coding agent (Claude Code, working in a terminal on a MacBook Pro M4 16GB with Node 24, Godot 4.7.2 and Blender 5.3 installed; Unity is NOT installed) will write and test essentially all of it. The game: first-person on …",
+      "promptFramed": true,
+      "lastProgressAt": 1794975844436,
+      "tokens": 89579,
+      "toolCalls": 14,
+      "durationMs": 107717,
+      "resultPreview": "{\"option\":\"Three.js (plain JS/TS + Vite), optionally react-three-fiber\",\"verdicts\":[{\"claim\":\"Latest three.js is r187 (three@0.187.0) published 2026-10-30; r186 on 2026-09-08; 2026 cadence r183 Feb, r184 Apr 16, r185 Jun 25.\",\"verdict\":\"confirmed\",\"correction\":\"npm registry (queried live 2026-11-17): 0.187.0 at 2026-10-30T08:09Z, 0.186.0 at 2026-09-08, 0.185.0 at 2026-06-25, 0.184.0 at 2026-04-16.…"
+    }
+  ],
+  "totalTokens": 1203993,
+  "totalToolCalls": 224
+}

@@ -1,0 +1,14 @@
+* text=auto eol=lf
+*.sh text eol=lf
+*.gd text eol=lf
+*.gdshader text eol=lf
+*.gdshaderinc text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.md text eol=lf
+*.png binary
+*.jpg binary
+*.glb binary
+*.blend binary
+*.ogg binary
+*.wav binary

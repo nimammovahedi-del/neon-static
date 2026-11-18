@@ -1,0 +1,16 @@
+# Godot
+godot/.godot/
+*.translation
+export_presets.cfg.bak
+# build output and scratch
+build/
+dist/
+*.tmp.png
+# OS and editors
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+*.blend1
+.vscode/
+.idea/
